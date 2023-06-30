@@ -51,7 +51,7 @@ while (running):
 
 
     # Clear the screen
-    screen.fill(pygame.Color(255, 255, 255))
+    screen.fill(pygame.Color(0, 0, 0))
 
     # Rendering code goes here
     # ...
@@ -62,13 +62,16 @@ while (running):
     
     # Print lines
     for col in range(WORKING_SIZE[0]):
-        height = WORKING_SIZE[1] / distances[col][0]
+        height = (WORKING_SIZE[1] / distances[col][0]) * 4.0
         space = (WORKING_SIZE[1] - height) / 2
 
         type = distances[col][1]
-        color = COLORS[type]
+        face = distances[col][2]
+        base_color = COLORS[type]
+        shade_factor = 0.15 if face == 0 else (0.45 if face == 2 else 0.0)
+        shaded_color = (base_color[0] * (1.0 - shade_factor), base_color[1] * (1.0 - shade_factor), base_color[2] * (1.0 - shade_factor))
 
-        pygame.draw.line(screen, color, (col, space), (col, WORKING_SIZE[1] - space))
+        pygame.draw.line(screen, shaded_color, (col, space), (col, WORKING_SIZE[1] - space))
     
 
     # Debugging draw

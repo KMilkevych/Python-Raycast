@@ -35,7 +35,7 @@ class Camera:
     def do_raycast(self, level):
 
         # For each column / working x cast a ray using dda
-        distances = [(0., "") for col in range(WORKING_SIZE[0])]
+        distances = [(0., "", 0) for col in range(WORKING_SIZE[0])]
 
         # Perform dda for each ray
         for col in range(WORKING_SIZE[0]):
@@ -81,6 +81,7 @@ class Camera:
 
         hit = False
         side = 0
+        face = 0
         while not(hit):
 
             # Jump in x-direction or y-direction to next grid cell
@@ -99,7 +100,9 @@ class Camera:
 
                 if (side == 0):
                     perpWallDist = (sideDistX - deltaDistX) * TILE_SIZE[0]
+                    face = 0 if stepX == -1 else 1
                 else:
                     perpWallDist = (sideDistY - deltaDistY) * TILE_SIZE[1]
+                    face = 2 if stepY == -1 else 3
 
-        return (perpWallDist, level[mapY][mapX])
+        return (perpWallDist, level[mapY][mapX], face)
