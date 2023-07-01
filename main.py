@@ -69,30 +69,31 @@ while (running):
 
         distance, cell, face, offset = distances[col]
 
-        height = max(0, (WORKING_SIZE[1] / distance) * (DISTANCE_TO_PROJECTION_PLANE / 16))
+
+        height = (TILE_SIZE[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         space = (WORKING_SIZE[1] - height) / 2
 
         # Get column from texture
-        texture_column = textures[cell].copy().subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
+        texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
 
         # Compute modifiers
         shade_factor = 1.0 - 0.2 * (face % 2)
 
         intensity = 1.0
         intensity_multiplier = 128
-        detensify_scale = min(1.0, (intensity / distance) * intensity_multiplier)
 
-        final_mod = shade_factor * detensify_scale * 255
+        intensify_factor = min(1.0, (intensity / distance) * intensity_multiplier)
+
+        final_factor = shade_factor * intensify_factor * 255
 
         # Apply texture to column
         column.blit(texture_column, (0, 0))
 
         # Apply effects
-        column.fill((final_mod, final_mod, final_mod), special_flags=BLEND_MULT)
+        column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, space))
-    
 
     # Debugging draw
     scale = 4.0
