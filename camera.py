@@ -4,6 +4,8 @@
 import numpy as np
 from constants import *
 
+import math
+
 def compute_direction(angle):
     return np.array([np.math.cos(angle), np.math.sin(angle)])
 
@@ -35,13 +37,15 @@ class Camera:
     def do_raycast(self, level):
 
         # For each column / working x cast a ray using dda
-        distances = [(0., "", 0) for col in range(WORKING_SIZE[0])]
+        distances = [0 for col in range(WORKING_SIZE[0])]
 
         # Perform dda for each ray
         for col in range(WORKING_SIZE[0]):
+            angle_mod = (col - WORKING_SIZE[0] / 2.) * COLUMN_WIDTH
+            rayDirection = compute_direction(self.angle + angle_mod)
 
-            rayDirection = compute_direction(self.angle + (col - WORKING_SIZE[0] / 2.) * COLUMN_WIDTH)
-            distances[col] = self.do_dda(level, rayDirection)
+            distance, cell, face, offset = self.do_dda(level, rayDirection)
+            distances[col] = (distance * np.math.cos(angle_mod), cell, face, offset)
         
         # Return distances
         return distances
@@ -82,6 +86,7 @@ class Camera:
         hit = False
         side = 0
         face = 0
+        offset = 0
         while not(hit):
 
             # Jump in x-direction or y-direction to next grid cell
@@ -101,8 +106,13 @@ class Camera:
                 if (side == 0):
                     perpWallDist = (sideDistX - deltaDistX) * TILE_SIZE[0]
                     face = 0 if stepX == -1 else 1
+                    
+                    offset = (self.position[1] + perpWallDist * rayDirection[1]) % TILE_SIZE[1]
                 else:
                     perpWallDist = (sideDistY - deltaDistY) * TILE_SIZE[1]
                     face = 2 if stepY == -1 else 3
 
-        return (perpWallDist, level[mapY][mapX], face)
+                    offset = (self.position[0] + perpWallDist * rayDirection[0]) % TILE_SIZE[0]
+                    
+
+        return (perpWallDist, level[mapY][mapX], face, math.floor(offset))
