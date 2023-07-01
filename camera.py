@@ -41,7 +41,7 @@ class Camera:
 
         # Perform dda for each ray
         for col in range(WORKING_SIZE[0]):
-            angle_mod = (col - WORKING_SIZE[0] / 2.) * COLUMN_WIDTH
+            angle_mod = (col - WORKING_SIZE[0] / 2) * COLUMN_WIDTH
             rayDirection = compute_direction(self.angle + angle_mod)
 
             distance, cell, face, offset = self.do_dda(level, rayDirection)
@@ -100,19 +100,19 @@ class Camera:
                 side = 1
 
             # Check if we hit a wall on mapX mapY
-            if level[mapY][mapX] in WALLS:
+            if level[mapY][mapX] != " ":
                 hit = True
 
                 if (side == 0):
                     perpWallDist = (sideDistX - deltaDistX) * TILE_SIZE[0]
                     face = 0 if stepX == -1 else 1
                     
-                    offset = (self.position[1] + perpWallDist * rayDirection[1]) % TILE_SIZE[1]
+                    offset = math.floor(self.position[1] + perpWallDist * rayDirection[1]) % TILE_SIZE[1]
                 else:
                     perpWallDist = (sideDistY - deltaDistY) * TILE_SIZE[1]
                     face = 2 if stepY == -1 else 3
 
-                    offset = (self.position[0] + perpWallDist * rayDirection[0]) % TILE_SIZE[0]
+                    offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % TILE_SIZE[0]
                     
 
-        return (perpWallDist, level[mapY][mapX], face, math.floor(offset))
+        return (perpWallDist, level[mapY][mapX], face, offset)
