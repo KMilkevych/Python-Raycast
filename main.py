@@ -14,7 +14,7 @@ player = camera.Camera(position=(8. * TILE_SIZE[0], 7. * TILE_SIZE[1]), angle=np
 
 # Initialize pygame window
 pygame.init()
-window = pygame.display.set_mode(WINDOW_SIZE, DOUBLEBUF, 16)
+window = pygame.display.set_mode(WINDOW_SIZE, flags=DOUBLEBUF | RESIZABLE, depth=16, vsync=True)
 screen = pygame.Surface(WORKING_SIZE)
 
 pygame.display.set_caption("Raycasting")
@@ -37,6 +37,17 @@ while (running):
         if event.type == pygame.QUIT:
             running = False
 
+        # If its a resize event
+        if event.type == pygame.VIDEORESIZE:
+            WINDOW_SIZE = event.dict['size']
+
+        # Keypress events
+        if event.type == pygame.KEYDOWN:
+
+            # If ESCAPE then quit
+            if event.key == pygame.K_ESCAPE:
+                running = False
+
     # Update position based on inputs   
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP]:
@@ -54,12 +65,12 @@ while (running):
     screen.fill(pygame.Color(0, 0, 0))
 
     # Draw sky and ground
-    pygame.draw.rect(screen, SKY_COLOR, pygame.Rect((0, 0), (WORKING_SIZE[0], WORKING_SIZE[1]/2)))
+    pygame.draw.rect(screen, SKY_COLOR, pygame.Rect((0, 0), (WORKING_SIZE[0], WORKING_SIZE[1]/2 )))
     pygame.draw.rect(screen, GROUND_COLOR, pygame.Rect((0, WORKING_SIZE[1]/2), (WORKING_SIZE[0], WORKING_SIZE[1]/2)))
 
     
     # Get raycast distances
-    distances = player.do_raycast(LEVEL)
+    distances = player.do_raycast(WALLS)
 
     # Create pygame surface for a line
     column = pygame.Surface((1, TILE_SIZE[1]))
@@ -67,11 +78,12 @@ while (running):
     # Print lines
     for col in range(WORKING_SIZE[0]):
 
+        # Extract data from dda
         distance, cell, face, offset = distances[col]
 
-
+        # Compute height of wall, and space/offset at top based on player height
         height = (TILE_SIZE[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
-        space = (WORKING_SIZE[1] - height) / 2
+        height_offset = (PLAYER_HEIGHT / distance) * DISTANCE_TO_PROJECTION_PLANE
 
         # Get column from texture
         texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
@@ -93,13 +105,13 @@ while (running):
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
         # Blit column
-        screen.blit(pygame.transform.scale(column, (1, height)), (col, space))
+        screen.blit(pygame.transform.scale(column, (1, height)), (col, WORKING_SIZE[1]/2 - height + height_offset))
 
     # Debugging draw
     scale = 4.0
-    for y in range(len(LEVEL)):
-        for x in range(len(LEVEL[y])):
-            pygame.draw.rect(screen, COLORS[LEVEL[y][x]], pygame.Rect((x * scale, y * scale), (scale, scale)))
+    for y in range(len(WALLS)):
+        for x in range(len(WALLS[y])):
+            pygame.draw.rect(screen, COLORS[WALLS[y][x]], pygame.Rect((x * scale, y * scale), (scale, scale)))
 
     pygame.draw.circle(screen, "black", player.position*scale/ TILE_SIZE[0], 4, 1)
     pygame.draw.line(screen, "green", player.position*scale / TILE_SIZE[0], player.position*scale/ TILE_SIZE[0] + player.direction * DISTANCE_TO_PROJECTION_PLANE * scale / (TILE_SIZE[0]**2), 1)

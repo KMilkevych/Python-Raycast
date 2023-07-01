@@ -1,13 +1,13 @@
 import numpy as np
 
 WINDOW_SIZE = (1280, 800)
-WINDOW_SIZE = (1600, 1000)
+WINDOW_SIZE = (1920, 1200)
 WORKING_SIZE = (320, 200)
-WORKING_SIZE = (640, 1000)
+WORKING_SIZE = (640, 800)
 
 TILE_SIZE = (32, 32, 64)
 
-LEVEL = [
+WALLS = [
     ["#","#","#","#","#","#","#","#","#","#","#","#","#","#","#","#"],
     ["#"," "," "," "," "," "," "," "," "," "," "," "," "," "," ","#"],
     ["#"," ","A","A","A"," "," "," "," "," "," "," "," "," "," ","#"],
@@ -25,8 +25,6 @@ LEVEL = [
     ["#"," "," "," "," "," "," "," "," "," "," "," "," "," "," ","#"],
     ["#","#","#","#","#","#","#","#","#","#","#","#","#","#","#","#"],
 ]
-
-# WALLS = ["#", "A", "B", "C", "1", "2", "3", "4"]
 
 
 COLORS = {
@@ -46,7 +44,9 @@ GROUND_COLOR = (60, 20, 0)
 SKY_COLOR = (160, 230, 230)
 
 PLAYER_HEIGHT = 32
-PLAYER_FOV = np.math.pi / 3
+PLAYER_HEIGHT_ADJUST = TILE_SIZE[2] - PLAYER_HEIGHT
+
+PLAYER_FOV = np.math.pi / 2.5
 
 PLAYER_SPEED = 32
 PLAYER_TURN_SPEED = 2
