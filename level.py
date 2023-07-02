@@ -1,8 +1,6 @@
 
 class Level:
 
-    
-
     def __init__(self):
 
         self.tile_size = (32, 32, 64)

@@ -68,13 +68,9 @@ while (running):
     # Update position based on inputs   
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP]:
-        #player.move(1., dt)
         player.move_collide(1., dt, level)
-        #print(player.position / TILE_SIZE[0])
     if keys[pygame.K_DOWN]:
-        #player.move(-1., dt)
         player.move_collide(-1., dt, level)
-        #print(player.position / TILE_SIZE[0])
     if keys[pygame.K_LEFT]:
         player.turn(-1., dt)
     if keys[pygame.K_RIGHT]:
