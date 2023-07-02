@@ -32,6 +32,9 @@ def load_textures():
     dark_gray = pygame.Surface(TEXTURE_SIZE)
     dark_gray.fill((50, 50, 50))
 
+    err = pygame.Surface(TEXTURE_SIZE)
+    err.fill((255, 0, 255))
+
     return {
         "#": dark_gray,
         "A": brick_texture_01,
@@ -47,7 +50,8 @@ def load_textures():
         "H": purple_stone,
         "I": red_brick,
         "J": eagle_brick,
-        "K": wood
+        "K": wood,
+        " ": err
     }
 
 def load_texture(filename):

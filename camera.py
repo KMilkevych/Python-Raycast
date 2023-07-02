@@ -52,8 +52,8 @@ class Camera:
     
     def do_dda(self, level, rayDirection):
 
-        posX = self.position[0] / TILE_SIZE[0]
-        posY = self.position[1] / TILE_SIZE[1]
+        posX = self.position[0] / level.tile_size[0]
+        posY = self.position[1] / level.tile_size[1]
 
         mapX = int(posX)
         mapY = int(posY)
@@ -64,7 +64,7 @@ class Camera:
         deltaDistX = 1e30 if (rayDirection[0] == 0) else np.abs(1 / rayDirection[0])
         deltaDistY = 1e30 if (rayDirection[1] == 0) else np.abs(1 / rayDirection[1])
 
-        perpWallDist = 0
+        perpWallDist = 1e30
 
         stepX = 0
         stepY = 0
@@ -87,6 +87,7 @@ class Camera:
         side = 0
         face = 0
         offset = 0
+        cell = " "
         while not(hit):
 
             # Jump in x-direction or y-direction to next grid cell
@@ -98,21 +99,25 @@ class Camera:
                 sideDistY += deltaDistY
                 mapY += stepY
                 side = 1
+            
+            if mapY >= len(level.walls) or mapX >= len(level.walls[mapY]):
+                break
 
             # Check if we hit a wall on mapX mapY
-            if level[mapY][mapX] != " ":
+            cell = level.walls[mapY][mapX]
+            if cell != " ":
                 hit = True
 
                 if (side == 0):
-                    perpWallDist = (sideDistX - deltaDistX) * TILE_SIZE[0]
+                    perpWallDist = (sideDistX - deltaDistX) * level.tile_size[0]
                     face = 0 if stepX == -1 else 1
                     
-                    offset = math.floor(self.position[1] + perpWallDist * rayDirection[1]) % TILE_SIZE[1]
+                    offset = math.floor(self.position[1] + perpWallDist * rayDirection[1]) % level.tile_size[1]
                 else:
-                    perpWallDist = (sideDistY - deltaDistY) * TILE_SIZE[1]
+                    perpWallDist = (sideDistY - deltaDistY) * level.tile_size[1]
                     face = 2 if stepY == -1 else 3
 
-                    offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % TILE_SIZE[0]
+                    offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
                     
 
-        return (perpWallDist, level[mapY][mapX], face, offset)
+        return (perpWallDist, cell, face, offset)

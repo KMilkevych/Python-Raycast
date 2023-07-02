@@ -9,8 +9,15 @@ import camera
 
 from texture_helper import *
 
+from level import *
+
+# Level
+level = Level()
+PLAYER_HEIGHT_ADJUST = level.tile_size[2] - PLAYER_HEIGHT
+
 # Game active objects
-player = camera.Camera(position=(8. * TILE_SIZE[0], 7. * TILE_SIZE[1]), angle=np.math.pi)
+player = camera.Camera(position=(8. * level.tile_size[0], 7. * level.tile_size[1]), angle=np.math.pi)
+
 
 # Initialize pygame window
 pygame.init()
@@ -81,10 +88,10 @@ while (running):
 
     
     # Get raycast distances
-    distances = player.do_raycast(WALLS)
+    distances = player.do_raycast(level)
 
     # Create pygame surface for a line
-    column = pygame.Surface((1, TILE_SIZE[1]))
+    column = pygame.Surface((1, level.tile_size[1])) # COME BACK TO THIS AND CHANGE IT TO TEXTURE_SIZE[1]
     
     # Print lines
     for col in range(WORKING_SIZE[0]):
@@ -93,7 +100,7 @@ while (running):
         distance, cell, face, offset = distances[col]
 
         # Compute height of wall, and space/offset at top based on player height
-        height = (TILE_SIZE[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
+        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         height_offset = (PLAYER_HEIGHT / distance) * DISTANCE_TO_PROJECTION_PLANE
 
         # Get column from texture
