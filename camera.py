@@ -72,7 +72,10 @@ class Camera:
 
         # Perform dda for each ray
         for col in range(WORKING_SIZE[0]):
-            angle_mod = (col - WORKING_SIZE[0] / 2) * COLUMN_WIDTH
+            
+            #angle_mod = (col - WORKING_SIZE[0] / 2) * COLUMN_WIDTH # This is faster, but gives curved edges effect
+            angle_mod =  np.math.atan2((col - WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
+
             rayDirection = compute_direction(self.angle + angle_mod)
 
             distance, cell, face, offset = self.do_dda(level, rayDirection)
