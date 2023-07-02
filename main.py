@@ -13,7 +13,6 @@ from level import *
 
 # Level
 level = Level()
-PLAYER_HEIGHT_ADJUST = level.tile_size[2] - PLAYER_HEIGHT
 
 # Game active objects
 player = camera.Camera(position=(8. * level.tile_size[0], 7. * level.tile_size[1]), angle=np.math.pi)
@@ -57,22 +56,24 @@ while (running):
 
             # If CTRL the crouch
             if event.key == pygame.K_LCTRL:
-                PLAYER_HEIGHT /= 2
+                player.height /= 2
 
         if event.type == pygame.KEYUP:
 
             # If CTRL then un-crouch
             if event.key == pygame.K_LCTRL:
-                PLAYER_HEIGHT *= 2
+                player.height *= 2
 
 
     # Update position based on inputs   
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP]:
-        player.move(1., dt)
+        #player.move(1., dt)
+        player.move_collide(1., dt, level)
         #print(player.position / TILE_SIZE[0])
     if keys[pygame.K_DOWN]:
-        player.move(-1., dt)
+        #player.move(-1., dt)
+        player.move_collide(-1., dt, level)
         #print(player.position / TILE_SIZE[0])
     if keys[pygame.K_LEFT]:
         player.turn(-1., dt)
@@ -101,7 +102,7 @@ while (running):
 
         # Compute height of wall, and space/offset at top based on player height
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
-        height_offset = (PLAYER_HEIGHT / distance) * DISTANCE_TO_PROJECTION_PLANE
+        height_offset = (player.height / distance) * DISTANCE_TO_PROJECTION_PLANE
 
         # Get column from texture
         #texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
@@ -126,17 +127,6 @@ while (running):
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, WORKING_SIZE[1]/2 - height + height_offset))
 
-    '''
-    # Debugging draw
-    scale = 4.0
-    for y in range(len(WALLS)):
-        for x in range(len(WALLS[y])):
-            pygame.draw.rect(screen, COLORS[WALLS[y][x]], pygame.Rect((x * scale, y * scale), (scale, scale)))
-
-    pygame.draw.circle(screen, "black", player.position*scale/ TILE_SIZE[0], 4, 1)
-    pygame.draw.line(screen, "green", player.position*scale / TILE_SIZE[0], player.position*scale/ TILE_SIZE[0] + player.direction * DISTANCE_TO_PROJECTION_PLANE * scale / (TILE_SIZE[0]**2), 1)
-    '''
-
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
     window.blit(frame, frame.get_rect())
@@ -145,7 +135,7 @@ while (running):
     pygame.display.flip()
 
     # Limit fps
-    dt = clock.tick(60) / 1000
+    dt = clock.tick(120) / 1000
     pygame.display.set_caption("Raycasting " + str(np.round(1. / dt, 1)))
 
 # Quit application

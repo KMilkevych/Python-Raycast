@@ -36,23 +36,42 @@ def load_textures():
     err.fill((255, 0, 255))
 
     return {
-        "#": dark_gray,
-        "A": brick_texture_01,
-        "B": brick_texture_02,
-        "C": brick_texture_03,
-        "0": red,
-        "1": green,
-        "2": blue,
-        "D": blue_stone,
-        "E": color_stone,
-        "F": grey_stone,
-        "G": mossy_stone,
-        "H": purple_stone,
-        "I": red_brick,
-        "J": eagle_brick,
-        "K": wood,
-        " ": err
+        1: dark_gray,
+        2: brick_texture_01,
+        3: brick_texture_02,
+        4: brick_texture_03,
+        5: red,
+        6: green,
+        7: blue,
+        8: blue_stone,
+        9: color_stone,
+        10: grey_stone,
+        11: mossy_stone,
+        12: purple_stone,
+        13: red_brick,
+        14: eagle_brick,
+        15: wood,
+        0: err
     }
+
+    return [
+        err,
+        dark_gray,
+        red,
+        green,
+        blue,
+        brick_texture_01,
+        brick_texture_02,
+        brick_texture_03,
+        blue_stone,
+        color_stone,
+        grey_stone,
+        mossy_stone,
+        purple_stone,
+        red_brick,
+        eagle_brick,
+        wood
+    ]
 
 def load_texture(filename):
     tex = pygame.image.load(filename).convert()
