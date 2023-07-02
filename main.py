@@ -91,7 +91,7 @@ while (running):
     distances = player.do_raycast(level)
 
     # Create pygame surface for a line
-    column = pygame.Surface((1, level.tile_size[1])) # COME BACK TO THIS AND CHANGE IT TO TEXTURE_SIZE[1]
+    column = pygame.Surface((1, TEXTURE_SIZE[1]))
     
     # Print lines
     for col in range(WORKING_SIZE[0]):
@@ -104,7 +104,7 @@ while (running):
         height_offset = (PLAYER_HEIGHT / distance) * DISTANCE_TO_PROJECTION_PLANE
 
         # Get column from texture
-        texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
+        #texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
 
         # Compute modifiers
         shade_factor = 1.0 - 0.2 * (face % 2)
@@ -117,7 +117,8 @@ while (running):
         final_factor = shade_factor * intensify_factor * 255
 
         # Apply texture to column
-        column.blit(texture_column, (0, 0))
+        #column.blit(texture_column, (0, 0))
+        column.blit(textures[cell], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
 
         # Apply effects
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
