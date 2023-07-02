@@ -48,6 +48,17 @@ while (running):
             if event.key == pygame.K_ESCAPE:
                 running = False
 
+            # If CTRL the crouch
+            if event.key == pygame.K_LCTRL:
+                PLAYER_HEIGHT /= 2
+
+        if event.type == pygame.KEYUP:
+
+            # If CTRL then un-crouch
+            if event.key == pygame.K_LCTRL:
+                PLAYER_HEIGHT *= 2
+
+
     # Update position based on inputs   
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP]:
@@ -107,6 +118,7 @@ while (running):
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, WORKING_SIZE[1]/2 - height + height_offset))
 
+    '''
     # Debugging draw
     scale = 4.0
     for y in range(len(WALLS)):
@@ -115,7 +127,7 @@ while (running):
 
     pygame.draw.circle(screen, "black", player.position*scale/ TILE_SIZE[0], 4, 1)
     pygame.draw.line(screen, "green", player.position*scale / TILE_SIZE[0], player.position*scale/ TILE_SIZE[0] + player.direction * DISTANCE_TO_PROJECTION_PLANE * scale / (TILE_SIZE[0]**2), 1)
-
+    '''
 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
