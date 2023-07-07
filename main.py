@@ -84,34 +84,12 @@ while (running):
     pygame.draw.rect(screen, GROUND_COLOR, pygame.Rect((0, WORKING_SIZE[1]/2), (WORKING_SIZE[0], WORKING_SIZE[1]/2)))
 
 
-    # Get floorcast data
-    scanlines = player.do_floorcast(level)
-    
     # Get raycast distances
     distances = player.do_raycast(level)
 
-    # Create pygame surface for a pixel
-    pixel = pygame.Surface((1, 1))
-
-    # Print scanlines
-    
-    for row in range(0, WORKING_SIZE[1], 10):
-        
-        # Get scanline
-        scanline = scanlines[row]
-
-        # Iterate over each pixel
-        for col in range(0, WORKING_SIZE[0], 10):
-
-            # Extract data
-            cell, textureX, textureY = scanline[col]
-
-            # Draw texture to pixel
-            pixel.blit(textures[cell], (-1 * textureX, -1 * textureY))
-
-            # Draw pixel to screen
-            screen.blit(pygame.transform.scale(pixel, (10, 10)), (col, row))
-    
+    # Compute floors
+    floor_surface = player.do_floorcast_to_surface(distances, level, textures)
+    screen.blit(floor_surface, (0, 0))
 
     # Create pygame surface for a line
     column = pygame.Surface((1, TEXTURE_SIZE[1]))
@@ -123,8 +101,7 @@ while (running):
         distance, cell, face, offset = distances[col]
 
         # Compute height of wall, and space/offset at top based on player height
-        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
-        height_offset = (player.height / distance) * DISTANCE_TO_PROJECTION_PLANE
+        height, height_offset = player.column_height_from_distance(level, distance)
 
         # Get column from texture
         #texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
@@ -147,7 +124,7 @@ while (running):
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
         # Blit column
-        screen.blit(pygame.transform.scale(column, (1, height)), (col, WORKING_SIZE[1]/2 - height + height_offset))
+        screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset))
 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
@@ -157,7 +134,7 @@ while (running):
     pygame.display.flip()
 
     # Limit fps
-    dt = clock.tick(120) / 1000
+    dt = clock.tick(30) / 1000
     pygame.display.set_caption("Raycasting " + str(np.round(1. / dt, 1)))
 
 # Quit application

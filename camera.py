@@ -1,6 +1,8 @@
 # https://lodev.org/cgtutor/raycasting.html
 # https://permadi.com/1996/05/ray-casting-tutorial-table-of-contents/
 
+import pygame
+
 import numpy as np
 from constants import *
 
@@ -67,68 +69,72 @@ class Camera:
         # Update own position
         self.position = new_pos
     
-    def do_floorcast(self, level):
+    def do_floorcast_to_surface(self, distances, level, textures):
+
+        # Downscale
+        step = 2
         
-        # Results array
-        scanlines = [[(0, 0, 0) for col in range(0, WORKING_SIZE[0])] for row in range(0, WORKING_SIZE[1])]
+        # Create a surface
+        surface = pygame.Surface(WORKING_SIZE)
 
-        # Angle modifier for left-most or right-most pixel
-        angle_mod =  np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
+        # Create a pixel
+        pixel = pygame.Surface((1, 1))
 
-        # Left-most and right-most pixel ray
-        ray0Dir = compute_direction(self.angle - angle_mod)
-        ray1Dir = compute_direction(self.angle + angle_mod)
+        # Iterate over each vertical column
+        for col in range(0, WORKING_SIZE[0], step):
 
-        # Perform scanlines
-        for row in range(0, WORKING_SIZE[1], 10):
+            # Compute relative angle based on column
+            angle_mod =  np.math.atan2((col - WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
+            rayDirection = compute_direction(self.angle + angle_mod)
+
+            # Extract the distance to the thingy from the thiny
+            distance = distances[col][0]
+
+            # Compute the height and height_offset
+            column_height, column_offset = self.column_height_from_distance(level, distance)
+
+            # Now work for each floor pixel
+            for row in range(math.floor(column_height + column_offset), WORKING_SIZE[1], step):
+
+                # Compute the horisontal distance on the floor/horisontal distance to where intersection with floor occurs
+                look_offset = (row - WORKING_SIZE[1]/2)
+
+                if look_offset == 0:
+                    continue
+
+                h_distance = (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+
+                # Now we part this into x and y distances using player angle
+                # xy_distance = self.direction * h_distance
+                xy_distance = rayDirection * h_distance
+
+
+                # Now compute the exact cell
+                levelX = (xy_distance[0] + self.position[0]) / level.tile_size[0]
+                levelY = (xy_distance[1] + self.position[1]) / level.tile_size[1]
+
+                cellX = math.floor(levelX)
+                cellY = math.floor(levelY)
+
+                texture_id = 0
+                if not(cellX < 0 or cellY < 0 or cellY >= len(level.floors) or cellX >= len(level.floors[cellY])):
+                    texture_id = level.floors[cellY][cellX]
+
+                # Now compute the texture x and y
+                textureX = levelX * level.tile_size[0] / step % TEXTURE_SIZE[0]
+                textureY = levelY * level.tile_size[1] / step % TEXTURE_SIZE[1]
+
+
+                # Now draw that to the pixel on the screen
+                pixel.blit(textures[texture_id], (-textureX, -textureY))
+
+                # Draw pixel to surface
+                surface.blit(pygame.transform.scale(pixel, (step, step)), (col, row))
+
+            # We have our own direction vector, now compute the look angle
             
-            # Current y-position compared to center of the screen
-            p = row - WORKING_SIZE[1]/2
-
-            # If p is 0, skip
-            if p == 0:
-                continue
-
-            # Horizontal distance form the camera to the floor
-            hdistance = (self.height / p) # * DISTANCE_TO_PROJECTION_PLANE # <-- we work in suboptimales
-
-            # Step vectors for linear interpolation
-            floorStepX = hdistance * (ray1Dir[0] -  ray0Dir[0]) / (WORKING_SIZE[0] / 10)
-            floorStepY = hdistance * (ray1Dir[1] -  ray0Dir[1]) / (WORKING_SIZE[0] / 10)
-
-            # Current coordinates (updated throughout linear interpolation)
-            floorX = self.position[0] / level.tile_size[0] + hdistance * ray0Dir[0]
-            floorY = self.position[1] / level.tile_size[1] + hdistance * ray0Dir[1]
-
-            # Now do linear interpolation
-            for col in range(0, WORKING_SIZE[0], 10):
-
-                # Get floor cell coordinates
-                cellX = math.floor(floorX)
-                cellY = math.floor(floorY)
-
-                # Check if cellX or cellY is out of dimensions
-                if cellY < 0 or cellY >= len(level.floors):
-                    continue
-
-                if cellX < 0 or cellX >= len(level.floors[cellY]):
-                    continue
-
-                # Get the texture coordinates
-                textureX = int((floorX - cellX) * TEXTURE_SIZE[0]) & (TEXTURE_SIZE[0] - 1)
-                textureY = int((floorY - cellY) * TEXTURE_SIZE[1]) & (TEXTURE_SIZE[1] - 1)
-
-                # Print cellX cellY
-                #print(cellX, cellY)
-
-                # Paste results
-                scanlines[row][col] = (level.floors[cellY][cellX], textureX, textureY)
-
-                # Take a step
-                floorX += floorStepX
-                floorY += floorStepY
-
-        return scanlines
+        # Return surface
+        return surface
         
     def do_raycast(self, level):
 
@@ -220,3 +226,8 @@ class Camera:
                     
 
         return (perpWallDist, cell, face, offset)
+
+    def column_height_from_distance(self, level, distance):
+        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
+        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
+        return (height, offset)
