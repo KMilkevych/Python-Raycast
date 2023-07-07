@@ -9,7 +9,7 @@ GROUND_COLOR = (60, 20, 0)
 #SKY_COLOR = (160, 230, 230)
 SKY_COLOR = (0, 0, 0)
 
-PLAYER_FOV = np.math.pi / 1.5
+PLAYER_FOV = np.math.pi / 2
 
 PLAYER_SPEED = 32
 PLAYER_TURN_SPEED = 2

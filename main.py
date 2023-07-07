@@ -83,14 +83,40 @@ while (running):
     pygame.draw.rect(screen, SKY_COLOR, pygame.Rect((0, 0), (WORKING_SIZE[0], WORKING_SIZE[1]/2 )))
     pygame.draw.rect(screen, GROUND_COLOR, pygame.Rect((0, WORKING_SIZE[1]/2), (WORKING_SIZE[0], WORKING_SIZE[1]/2)))
 
+
+    # Get floorcast data
+    scanlines = player.do_floorcast(level)
     
     # Get raycast distances
     distances = player.do_raycast(level)
 
+    # Create pygame surface for a pixel
+    pixel = pygame.Surface((1, 1))
+
+    # Print scanlines
+    
+    for row in range(0, WORKING_SIZE[1], 10):
+        
+        # Get scanline
+        scanline = scanlines[row]
+
+        # Iterate over each pixel
+        for col in range(0, WORKING_SIZE[0], 10):
+
+            # Extract data
+            cell, textureX, textureY = scanline[col]
+
+            # Draw texture to pixel
+            pixel.blit(textures[cell], (-1 * textureX, -1 * textureY))
+
+            # Draw pixel to screen
+            screen.blit(pygame.transform.scale(pixel, (10, 10)), (col, row))
+    
+
     # Create pygame surface for a line
     column = pygame.Surface((1, TEXTURE_SIZE[1]))
-    
-    # Print lines
+
+    # Print columns
     for col in range(WORKING_SIZE[0]):
 
         # Extract data from dda

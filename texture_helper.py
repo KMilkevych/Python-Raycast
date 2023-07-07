@@ -57,22 +57,22 @@ def load_textures():
     '''
 
     return [
-        err,
-        dark_gray,
-        red,
-        green,
-        blue,
-        brick_texture_01,
-        brick_texture_02,
-        brick_texture_03,
-        blue_stone,
-        color_stone,
-        grey_stone,
-        mossy_stone,
-        purple_stone,
-        red_brick,
-        eagle_brick,
-        wood
+        err,                # 0
+        dark_gray,          # 1
+        red,                # 2
+        green,              # 3
+        blue,               # 4
+        brick_texture_01,   # 5
+        brick_texture_02,   # 6
+        brick_texture_03,   # 7
+        blue_stone,         # 8
+        color_stone,        # 9
+        grey_stone,         # 10
+        mossy_stone,        # 11
+        purple_stone,       # 12
+        red_brick,          # 13
+        eagle_brick,        # 14
+        wood                # 15
     ]
 
 def load_texture(filename):
