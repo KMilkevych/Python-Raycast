@@ -2,6 +2,7 @@
 # https://permadi.com/1996/05/ray-casting-tutorial-table-of-contents/
 
 import pygame
+import pygame.surfarray as surfarray
 
 import numpy as np
 from constants import *
@@ -72,20 +73,21 @@ class Camera:
     def do_floorcast_to_surface(self, distances, level, textures):
 
         # Downscale
-        step = 2
+        step = 1
         
         # Create a surface
         surface = pygame.Surface(WORKING_SIZE)
+        surface_array = surfarray.pixels2d(surface)
 
         # Create a pixel
-        pixel = pygame.Surface((1, 1))
+        #pixel = pygame.Surface((1, 1))
 
         # Iterate over each vertical column
-        for col in range(0, WORKING_SIZE[0], step):
+        for col in range(0, WORKING_SIZE[0], 1):
 
             # Compute relative angle based on column
             angle_mod =  np.math.atan2((col - WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
-            rayDirection = compute_direction(self.angle + angle_mod)
+            rayDirection = compute_direction(self.angle + angle_mod).reshape((1, -1))
 
             # Extract the distance to the thingy from the thiny
             distance = distances[col][0]
@@ -93,48 +95,116 @@ class Camera:
             # Compute the height and height_offset
             column_height, column_offset = self.column_height_from_distance(level, distance)
 
-            # Now work for each floor pixel
-            for row in range(math.floor(column_height + column_offset), WORKING_SIZE[1], step):
+            # Generate numpy array of certain size to contain row counts
+            nrows = WORKING_SIZE[1] - math.floor(column_height + column_offset)
+            rowarray = np.arange(math.floor(column_height + column_offset), WORKING_SIZE[1], 1)
 
-                # Compute the horisontal distance on the floor/horisontal distance to where intersection with floor occurs
-                look_offset = (row - WORKING_SIZE[1]/2)
+            # Now compute the look offsets
+            look_offsets = rowarray - WORKING_SIZE[1]/2
 
-                if look_offset == 0:
-                    continue
+            # Now compute horisontal distances
+            h_distances = (1/look_offsets) * ((self.height * DISTANCE_TO_PROJECTION_PLANE) / np.math.cos(angle_mod))
+            h_distances = h_distances.reshape((-1, 1))
 
-                h_distance = (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+            # Now compute the xy_distances
+            xy_distances = h_distances @ rayDirection
 
-                # Now we part this into x and y distances using player angle
-                # xy_distance = self.direction * h_distance
-                xy_distance = rayDirection * h_distance
+            # Compute level_xy
+            level_xy = (xy_distances + np.tile(self.position, (xy_distances.shape[0], 1)))
+            level_xy = np.transpose(level_xy) / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis]
 
+            # Compute cell_xy
+            cell_xy = np.floor(level_xy).T.astype(int)
 
-                # Now compute the exact cell
-                levelX = (xy_distance[0] + self.position[0]) / level.tile_size[0]
-                levelY = (xy_distance[1] + self.position[1]) / level.tile_size[1]
+            # Compute texture_xy
+            texture_xy = (level_xy * np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis]) % np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[:, np.newaxis]
+            texture_xy = np.floor(texture_xy).T.astype(int)
 
-                cellX = math.floor(levelX)
-                cellY = math.floor(levelY)
+            # Compute the textures array
+            floor = np.array(level.floors) # REFACTOR THIS
 
-                texture_id = 0
-                if not(cellX < 0 or cellY < 0 or cellY >= len(level.floors) or cellX >= len(level.floors[cellY])):
-                    texture_id = level.floors[cellY][cellX]
+            floor_texture_ids = floor[cell_xy[:,[0]], cell_xy[:,[1]]] # NOT USED YET
 
-                # Now compute the texture x and y
-                textureX = levelX * level.tile_size[0] / step % TEXTURE_SIZE[0]
-                textureY = levelY * level.tile_size[1] / step % TEXTURE_SIZE[1]
+            texture = surfarray.array2d(textures[14])
+            floor_pixels = texture[texture_xy[:,[0]], texture_xy[:,[1]]]
 
+            #print(floor_pixels[:,0].shape)
 
-                # Now draw that to the pixel on the screen
-                pixel.blit(textures[texture_id], (-textureX, -textureY))
+            # Draw using pixel references
+            #print(surface_array[[col], np.floor(column_offset).astype(int):].shape)
+            #print(surface_array[[col], np.floor(column_offset).astype(int):])
+            surface_array[col, math.floor(column_height + column_offset):WORKING_SIZE[1]] = floor_pixels[:,0]
 
-                # Draw pixel to surface
-                surface.blit(pygame.transform.scale(pixel, (step, step)), (col, row))
+        del surface_array
 
-            # We have our own direction vector, now compute the look angle
-            
         # Return surface
-        return surface
+        return surface        
+
+    # Now draw everything
+    '''
+    for row in range(nrows):
+
+        # Extract cell_xy and texture_xy
+        cell = cell_xy[row, :]
+        texture = texture_xy[row, :]
+
+        # Now we feast, get texture
+        cellx = cell[0].astype(int)
+        celly = cell[1].astype(int)
+
+        texture_id = 0
+        if not(cellx < 0 or celly < 0 or celly >= len(level.floors) or cellx >= len(level.floors[celly])):
+            texture_id = level.floors[celly][cellx]
+        
+        # Now draw that to the pixel on the screen
+        pixel.blit(textures[texture_id], (-texture[0], -texture[1]))
+
+        # Draw pixel to surface
+        surface.blit(pygame.transform.scale(pixel, (step, step)), (col, row + math.floor(column_height + column_offset)))
+    '''
+
+    '''
+    # Now work for each floor pixel
+    for row in range(math.floor(column_height + column_offset), WORKING_SIZE[1], step):
+
+        # Compute the horisontal distance on the floor/horisontal distance to where intersection with floor occurs
+        look_offset = (row - WORKING_SIZE[1]/2)
+
+        if look_offset == 0:
+            continue
+
+        h_distance = (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+
+        # Now we part this into x and y distances using player angle
+        # xy_distance = self.direction * h_distance
+        xy_distance = rayDirection * h_distance
+
+
+        # Now compute the exact cell
+        levelX = (xy_distance[0] + self.position[0]) / level.tile_size[0]
+        levelY = (xy_distance[1] + self.position[1]) / level.tile_size[1]
+
+        cellX = math.floor(levelX)
+        cellY = math.floor(levelY)
+
+        texture_id = 0
+        if not(cellX < 0 or cellY < 0 or cellY >= len(level.floors) or cellX >= len(level.floors[cellY])):
+            texture_id = level.floors[cellY][cellX]
+
+        # Now compute the texture x and y
+        textureX = levelX * level.tile_size[0] / step % TEXTURE_SIZE[0]
+        textureY = levelY * level.tile_size[1] / step % TEXTURE_SIZE[1]
+
+
+        # Now draw that to the pixel on the screen
+        pixel.blit(textures[texture_id], (-textureX, -textureY))
+
+        # Draw pixel to surface
+        surface.blit(pygame.transform.scale(pixel, (step, step)), (col, row))
+
+    # We have our own direction vector, now compute the look angle
+    '''
+        
         
     def do_raycast(self, level):
 

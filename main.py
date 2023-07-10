@@ -134,7 +134,7 @@ while (running):
     pygame.display.flip()
 
     # Limit fps
-    dt = clock.tick(30) / 1000
+    dt = clock.tick(120) / 1000
     pygame.display.set_caption("Raycasting " + str(np.round(1. / dt, 1)))
 
 # Quit application
