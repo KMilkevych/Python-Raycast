@@ -42,7 +42,7 @@ class Camera:
     def move_collide(self, direction, deltaTime, level):
 
         # Define wall margin
-        margin = 4
+        margin = 2
         
         # Compute new position
         pos_change = direction * self.direction * self.speed * deltaTime
