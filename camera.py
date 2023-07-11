@@ -70,7 +70,7 @@ class Camera:
         # Update own position
         self.position = new_pos
     
-    def do_floorcast_to_surface(self, distances, level, textures):
+    def do_floorcast_to_surface(self, level, textures):
 
         # Load textures as numpy array
         tile_textures = np.array(list(map(surfarray.array2d, textures)))
@@ -92,7 +92,7 @@ class Camera:
 
         # Compute h_distances
         h_distances = np.empty_like(look_offsets)
-        h_distances[:middle, 0] = (level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
+        h_distances[:middle, 0] = (level.ceiling_height - self.height) * DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
         h_distances[middle+1:, 0] = (self.height) * DISTANCE_TO_PROJECTION_PLANE / (look_offsets[middle+1:,0] * np.math.cos(angle_mod))
 
         # Compute ray hits

@@ -96,7 +96,7 @@ while (running):
     distances = player.do_raycast(level)
 
     # Compute floors
-    floor_surface = player.do_floorcast_to_surface(distances, level, textures)
+    floor_surface = player.do_floorcast_to_surface(level, textures)
     screen.blit(floor_surface, (0, 0))
 
     # Create pygame surface for a line
