@@ -95,9 +95,9 @@ while (running):
     # Get raycast distances
     distances = player.do_raycast(level)
 
-    # Compute floors
-    floor_surface = player.do_floorcast_to_surface(level, textures)
-    screen.blit(floor_surface, (0, 0))
+    # Compute floors and ceilings
+    floors_and_ceilings_surface = player.do_floorcast_to_surface(level, textures)
+    screen.blit(floors_and_ceilings_surface, (0, 0))
 
     # Create pygame surface for a line
     column = pygame.Surface((1, TEXTURE_SIZE[1]))
@@ -111,21 +111,13 @@ while (running):
         # Compute height of wall, and space/offset at top based on player height
         height, height_offset = player.column_height_from_distance(level, distance)
 
-        # Get column from texture
-        #texture_column = textures[cell].subsurface((offset % TEXTURE_SIZE[0], 0), (1, TEXTURE_SIZE[1]))
-
         # Compute modifiers
         shade_factor = 1.0 - 0.2 * (face % 2)
 
-        intensity = 1.0
-        intensity_multiplier = 128
-
-        intensify_factor = min(1.0, (intensity / distance) * intensity_multiplier)
-
+        intensify_factor = min(1.0, INTENSITY_MULTIPLIER / distance)
         final_factor = shade_factor * intensify_factor * 255
 
         # Apply texture to column
-        #column.blit(texture_column, (0, 0))
         column.blit(textures[cell], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
 
         # Apply effects

@@ -79,6 +79,10 @@ class Camera:
         surface = pygame.Surface(WORKING_SIZE)
         surface_array = surfarray.pixels2d(surface)
 
+        # Create a blend surface
+        #blend_surface = pygame.Surface(WORKING_SIZE)
+        #blend_surface_array = surfarray.pixels3d(blend_surface)
+
         # Compute angle mod
         angle_mod = np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
 
@@ -123,7 +127,6 @@ class Camera:
         cell_texture_ids[:middle] = ceiling[cells[:middle,:,0], cells[:middle,:,1]]
         cell_texture_ids[middle:] = floor[cells[middle:,:,0], cells[middle:,:,1]]
 
-
         # Compute coordinates on texture for each ray
         tex_size = np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[np.newaxis, np.newaxis, :]
 
@@ -138,6 +141,39 @@ class Camera:
 
         # Delete surface array
         del surface_array
+        
+        '''
+        # Compute true distances
+        distances = ray_hits
+        np.subtract(ray_hits, self.position, distances)
+        np.square(distances, distances)
+        distances = distances[:,:,0] + distances[:,:,1]
+        np.sqrt(distances, distances)
+
+        #print(distances)
+
+        # Compute intensity factors
+        intensities = distances
+        np.divide(INTENSITY_MULTIPLIER, intensities, intensities)
+        intensities[middle] = 0
+        np.clip(intensities, 0.0, 1.0, intensities)
+        np.multiply(intensities, 255, intensities)
+        intensities = intensities.T
+
+        #print(intensities)
+
+        
+
+        # Compute blend surface
+        blend_surface_array = np.dstack([intensities, intensities, intensities])
+
+        print(blend_surface_array)
+
+        del blend_surface_array
+
+        # Apply blend surface
+        surface.blit(blend_surface, (0, 0))
+        '''
 
         # Return surface
         return surface
@@ -151,7 +187,6 @@ class Camera:
         # Perform dda for each ray
         for col in range(WORKING_SIZE[0]):
             
-            #angle_mod = (col - WORKING_SIZE[0] / 2) * COLUMN_WIDTH # This is faster, but gives curved edges effect
             angle_mod =  np.math.atan2((col - WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
 
             rayDirection = compute_direction(self.angle + angle_mod)
@@ -238,3 +273,9 @@ class Camera:
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
+    '''
+    def column_height_from_distance_with_modifier(self, level, distance, modifier):
+        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE * modifier
+        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
+        return (height, offset)
+    '''

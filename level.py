@@ -4,7 +4,7 @@ class Level:
     def __init__(self):
 
         self.tile_size = (32, 32, 64)
-        self.ceiling_height = 96
+        self.ceiling_height = 128
 
         self.walls = [
             [ 1, 1, 1, 1, 1, 1, 5, 5, 6, 6, 7, 7, 8, 8, 9, 1],
