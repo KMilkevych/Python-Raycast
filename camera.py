@@ -79,8 +79,51 @@ class Camera:
         surface = pygame.Surface(WORKING_SIZE)
         surface_array = surfarray.pixels2d(surface)
 
-        # Create a pixel
-        #pixel = pygame.Surface((1, 1))
+        # Compute angle mod
+        angle_mod = np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
+
+        # Iterate over each horisontal row
+        for row in range(0, WORKING_SIZE[0]):
+
+            # Compute the left-most ray and right-most ray
+            left_ray = compute_direction(self.angle - angle_mod)
+            right_ray = compute_direction(self.angle + angle_mod)
+
+            # Compute how many ray "extensions" for the ray to hit the ground
+            look_offset = row - WORKING_SIZE[1]/2
+            
+            if look_offset == 0:
+                continue
+
+            h_distance = (1/look_offset) * (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+
+            # Now compute, where each ray hits the ground
+            floor_left_xy = left_ray * h_distance
+            floor_right_xy = right_ray * h_distance
+
+            # Now linearly interpolate between these
+            floor_xs = np.linspace(floor_left_xy[0], floor_right_xy[0], WORKING_SIZE[1])
+            floor_ys = np.linspace(floor_left_xy[1], floor_right_xy[1], WORKING_SIZE[1])
+
+            floor_xys = np.vstack([floor_xs, floor_ys]).T
+
+            #print(floor_xys.shape)
+
+            texture_xys = (floor_xys % np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[:, np.newaxis].T).astype(int)
+
+            #print(texture_xys.shape)
+
+            # Compute which cells on the floor we hit and get the right textures
+            # ...
+
+            # Now compute floor pixels
+            texture = surfarray.array2d(textures[14])
+            floor_pixels = texture[texture_xys[:,[0]], texture_xys[:,[1]]]
+
+            # Place into surface array
+            surface_array[row, :] = floor_pixels.T[0,:]
+
+            
 
         # Iterate over each vertical column
         for col in range(0, WORKING_SIZE[0], 1):
@@ -128,11 +171,7 @@ class Camera:
             texture = surfarray.array2d(textures[14])
             floor_pixels = texture[texture_xy[:,[0]], texture_xy[:,[1]]]
 
-            #print(floor_pixels[:,0].shape)
-
             # Draw using pixel references
-            #print(surface_array[[col], np.floor(column_offset).astype(int):].shape)
-            #print(surface_array[[col], np.floor(column_offset).astype(int):])
             surface_array[col, math.floor(column_height + column_offset):WORKING_SIZE[1]] = floor_pixels[:,0]
 
         del surface_array
