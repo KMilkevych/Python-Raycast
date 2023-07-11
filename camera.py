@@ -71,6 +71,9 @@ class Camera:
         self.position = new_pos
     
     def do_floorcast_to_surface(self, distances, level, textures):
+
+        # Load textures as numpy array
+        tile_textures = np.array(list(map(surfarray.array2d, textures)))
         
         # Create a surface
         surface = pygame.Surface(WORKING_SIZE)
@@ -102,23 +105,26 @@ class Camera:
         ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
         ray_hits_y = np.linspace(ray_hit_left[:, 1], ray_hit_right[:, 1], WORKING_SIZE[0], axis=1)
 
-        # Correct way
+        # Merge into x, y coordinate pairs for each row, column
         ray_hits = np.dstack([ray_hits_x, ray_hits_y]) # row, column, (x, y)
 
         # Compute which cells on the floor we hit and get the right textures
-        # ...
+        cells = np.floor(ray_hits / np.array([level.tile_size[0], level.tile_size[1]])).astype(int)
+        
+        # Compute which textures this corresponds to
+        floor = np.array(level.floors)
+        ceiling = np.array(level.ceilings)
+
+        cell_texture_ids = np.empty((WORKING_SIZE[1], WORKING_SIZE[0])).astype(int)
+        cell_texture_ids[:middle] = ceiling[np.clip(cells[:middle,:,0], 0, floor.shape[0]-1), np.clip(cells[:middle,:,1], 0, floor.shape[1]-1)]
+        cell_texture_ids[middle:] = floor[np.clip(cells[middle:,:,0], 0, floor.shape[0]-1), np.clip(cells[middle:,:,1], 0, floor.shape[1]-1)]
 
         # Compute texture_xys
         tex_size = np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[np.newaxis, np.newaxis, :]
         texture_xys = (np.floor(ray_hits) % tex_size).astype(int)
 
-        # Load texture
-        texture0 = surfarray.array2d(textures[15])
-        texture1 = surfarray.array2d(textures[10])
-
         # Compute scanlines
-        scanlines = texture0[texture_xys[:,:,0], texture_xys[:,:,1]]
-        scanlines[middle:] = texture1[texture_xys[middle:,:,0], texture_xys[middle:,:,1]]
+        scanlines = tile_textures[cell_texture_ids, texture_xys[:,:,0], texture_xys[:,:,1]]
 
         # Set surface to scanlines
         surface_array[:, :] = scanlines[:, :].T
