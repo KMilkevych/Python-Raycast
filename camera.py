@@ -83,48 +83,62 @@ class Camera:
         angle_mod = np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
 
         # Iterate over each horisontal row
-        for row in range(0, WORKING_SIZE[0]):
+        for row in range(0, WORKING_SIZE[1]):
 
             # Compute the left-most ray and right-most ray
             left_ray = compute_direction(self.angle - angle_mod)
             right_ray = compute_direction(self.angle + angle_mod)
 
             # Compute how many ray "extensions" for the ray to hit the ground
-            look_offset = row - WORKING_SIZE[1]/2
+            look_offset = np.abs(row - WORKING_SIZE[1]/2)
             
             if look_offset == 0:
                 continue
 
-            h_distance = (1/look_offset) * (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+            h_distance =  (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
 
             # Now compute, where each ray hits the ground
-            floor_left_xy = left_ray * h_distance
-            floor_right_xy = right_ray * h_distance
+            floor_left_xy = left_ray * h_distance + self.position
+            floor_right_xy = right_ray * h_distance + self.position
 
             # Now linearly interpolate between these
-            floor_xs = np.linspace(floor_left_xy[0], floor_right_xy[0], WORKING_SIZE[1])
-            floor_ys = np.linspace(floor_left_xy[1], floor_right_xy[1], WORKING_SIZE[1])
+            map_xs = np.linspace(floor_left_xy[0], floor_right_xy[0], WORKING_SIZE[0])
+            map_ys = np.linspace(floor_left_xy[1], floor_right_xy[1], WORKING_SIZE[0])
 
-            floor_xys = np.vstack([floor_xs, floor_ys]).T
+            map_xys = np.vstack([map_xs, map_ys]).T
+            
+            # Compute which cells on the floor map we hit
+            cell_xys = np.floor(map_xys / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T).astype(int)
 
-            #print(floor_xys.shape)
-
-            texture_xys = (floor_xys % np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[:, np.newaxis].T).astype(int)
-
-            #print(texture_xys.shape)
+            # Compute texture coordinates for each of those hits
+            texture_xys = (np.floor(map_xys) % np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[:, np.newaxis].T).astype(int)
 
             # Compute which cells on the floor we hit and get the right textures
             # ...
 
             # Now compute floor pixels
-            texture = surfarray.array2d(textures[14])
-            floor_pixels = texture[texture_xys[:,[0]], texture_xys[:,[1]]]
+            texture_floor = surfarray.array2d(textures[10])
+            texture_ceiling = surfarray.array2d(textures[15])
+
+            div = math.floor(WORKING_SIZE[0]/2)
+
+            floor_pixels = texture_floor[texture_xys[:div,0], texture_xys[:div,1]]
+            ceiling_pixels = texture_ceiling[texture_xys[div:,0], texture_xys[div:,1]]
+
+            #print(floor_pixels.shape)
+
+            #print(surface_array[[row], :].shape)
+            #print(floor_pixels.T[[0],:].shape)
+            #print(surface_array.shape)
 
             # Place into surface array
-            surface_array[row, :] = floor_pixels.T[0,:]
+            surface_array[:div, row] = floor_pixels
+            surface_array[div:, row] = ceiling_pixels
 
+        # Return surface
+        return surface
             
-
+        '''
         # Iterate over each vertical column
         for col in range(0, WORKING_SIZE[0], 1):
 
@@ -180,6 +194,7 @@ class Camera:
         return surface        
 
     # Now draw everything
+    '''
     '''
     for row in range(nrows):
 
