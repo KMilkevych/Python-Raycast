@@ -87,19 +87,20 @@ class Camera:
         right_ray = compute_direction(self.angle + angle_mod)
 
         # Generate rows
-        rows = np.arange(WORKING_SIZE[1])
-        look_offsets = (rows - WORKING_SIZE[1]/2)[:, np.newaxis]
+        middle = int(WORKING_SIZE[1]/2)
+        look_offsets = (np.arange(WORKING_SIZE[1]) - WORKING_SIZE[1]/2)[:, np.newaxis]
 
         # Compute h_distances
         h_distances = np.empty_like(look_offsets)
-
-        middle = int(WORKING_SIZE[1]/2)
         h_distances[:middle, 0] = (level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
         h_distances[middle+1:, 0] = (self.height) * DISTANCE_TO_PROJECTION_PLANE / (look_offsets[middle+1:,0] * np.math.cos(angle_mod))
 
         # Compute ray hits
-        ray_hit_left = (np.tile(left_ray, h_distances.shape) * h_distances + self.position)
-        ray_hit_right = (np.tile(right_ray, h_distances.shape) * h_distances + self.position)
+        ray_hit_left = (left_ray * h_distances)
+        np.add(ray_hit_left, self.position, ray_hit_left)
+
+        ray_hit_right = (right_ray * h_distances)
+        np.add(ray_hit_right, self.position, ray_hit_right)
 
         # Do linear interpolation for ray hits
         ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
@@ -108,78 +109,35 @@ class Camera:
         # Merge into x, y coordinate pairs for each row, column
         ray_hits = np.dstack([ray_hits_x, ray_hits_y]) # row, column, (x, y)
 
-        # Compute which cells on the floor we hit and get the right textures
-        cells = np.floor(ray_hits / np.array([level.tile_size[0], level.tile_size[1]])).astype(int)
-        
-        # Compute which textures this corresponds to
+        # Fetch floor and ceiling as numpy arrays
         floor = np.array(level.floors)
         ceiling = np.array(level.ceilings)
 
-        cell_texture_ids = np.empty((WORKING_SIZE[1], WORKING_SIZE[0])).astype(int)
-        cell_texture_ids[:middle] = ceiling[np.clip(cells[:middle,:,0], 0, floor.shape[0]-1), np.clip(cells[:middle,:,1], 0, floor.shape[1]-1)]
-        cell_texture_ids[middle:] = floor[np.clip(cells[middle:,:,0], 0, floor.shape[0]-1), np.clip(cells[middle:,:,1], 0, floor.shape[1]-1)]
+        # Compute which cells on the floor we hit and get the right textures and clip to size
+        cells = (ray_hits / np.array([level.tile_size[0], level.tile_size[1]])).astype(int)
+        np.clip(cells[:,:,0], 0, floor.shape[0]-1, cells[:,:,0])
+        np.clip(cells[:,:,1], 0, floor.shape[1]-1, cells[:,:,1])        
 
-        # Compute texture_xys
+        # Compute which texture ids the cells hit by rays correspond to
+        cell_texture_ids = np.empty((WORKING_SIZE[1], WORKING_SIZE[0])).astype(int)
+        cell_texture_ids[:middle] = ceiling[cells[:middle,:,0], cells[:middle,:,1]]
+        cell_texture_ids[middle:] = floor[cells[middle:,:,0], cells[middle:,:,1]]
+
+
+        # Compute coordinates on texture for each ray
         tex_size = np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[np.newaxis, np.newaxis, :]
-        texture_xys = (np.floor(ray_hits) % tex_size).astype(int)
+
+        texture_xys = ray_hits.astype(int)
+        np.mod(texture_xys, tex_size, texture_xys)
 
         # Compute scanlines
         scanlines = tile_textures[cell_texture_ids, texture_xys[:,:,0], texture_xys[:,:,1]]
 
-        # Set surface to scanlines
-        surface_array[:, :] = scanlines[:, :].T
+        # Write scanlines to surface
+        surface_array[:, :] = scanlines.T
 
         # Delete surface array
         del surface_array
-
-        return surface
-
-        print(scanlines.shape)
-
-        # Iterate over each horisontal row
-        for row in range(0, WORKING_SIZE[1]):
-
-
-            # Compute how many ray "extensions" for the ray to hit the ground
-            look_offset = row - WORKING_SIZE[1]/2
-            
-            if look_offset == 0:
-                continue
-            
-            # WORKS FOR FLOORS
-            #h_distance =  np.abs((self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
-
-            h_distance = np.abs(np.array([level.tile_size[2] - self.height, self.height])[int((np.sign(look_offset)+1)/2)] * DISTANCE_TO_PROJECTION_PLANE / (look_offset * np.math.cos(angle_mod)))
-
-            # WORKS FOR CEILINGS
-            #h_distance =  np.abs(((level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
-
-            # Now compute, where each ray hits the ground
-            floor_left_xy = left_ray * h_distance + self.position
-            floor_right_xy = right_ray * h_distance + self.position
-
-            # Now linearly interpolate between these
-            map_xs = np.linspace(floor_left_xy[0], floor_right_xy[0], WORKING_SIZE[0])
-            map_ys = np.linspace(floor_left_xy[1], floor_right_xy[1], WORKING_SIZE[0])
-
-            map_xys = np.vstack([map_xs, map_ys]).T
-            
-            # Compute which cells on the floor map we hit
-            cell_xys = np.floor(map_xys / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T).astype(int)
-
-            # Compute texture coordinates for each of those hits
-            texture_xys = (np.floor(map_xys) % np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[:, np.newaxis].T).astype(int)
-
-            # Compute which cells on the floor we hit and get the right textures
-            # ...
-
-            # Now compute scanline pixels
-            texture_ceiling_floor = [surfarray.array2d(textures[15]), surfarray.array2d(textures[10])]
-            scanline = texture_ceiling_floor[int((np.sign(look_offset)+1)/2)][texture_xys[:,0], texture_xys[:,1]]
-
-
-            # Place into surface array
-            surface_array[:, row] = scanline
 
         # Return surface
         return surface
