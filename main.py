@@ -75,6 +75,14 @@ while (running):
         player.turn(-1., dt)
     if keys[pygame.K_RIGHT]:
         player.turn(1., dt)
+    if keys[pygame.K_KP_8]:
+        player.height += 32 * dt
+    if keys[pygame.K_KP_2]:
+        player.height -= 32 * dt
+    if keys[pygame.K_KP_4]:
+        player.turn(-1., dt)
+    if keys[pygame.K_KP_6]:
+        player.turn(1., dt)
 
     # Clear the screen
     screen.fill(pygame.Color(0, 0, 0))
