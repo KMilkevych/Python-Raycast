@@ -91,20 +91,19 @@ class Camera:
         h_distances = np.empty_like(look_offsets)
 
         middle = int(WORKING_SIZE[1]/2)
-        h_distances[:middle, 0] = (level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE / (look_offsets[:middle,0] * np.math.cos(angle_mod))
+        h_distances[:middle, 0] = (level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
         h_distances[middle+1:, 0] = (self.height) * DISTANCE_TO_PROJECTION_PLANE / (look_offsets[middle+1:,0] * np.math.cos(angle_mod))
 
         # Compute ray hits
-        ray_hit_left = (np.tile(left_ray, h_distances.shape) * h_distances)
-        ray_hit_right = (np.tile(right_ray, h_distances.shape) * h_distances)
+        ray_hit_left = (np.tile(left_ray, h_distances.shape) * h_distances + self.position)
+        ray_hit_right = (np.tile(right_ray, h_distances.shape) * h_distances + self.position)
 
         # Do linear interpolation for ray hits
-        #ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
-        #ray_hits_y = np.linspace(ray_hit_left[:, 1], ray_hit_right[:, 1], WORKING_SIZE[0], axis=1)
+        ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
+        ray_hits_y = np.linspace(ray_hit_left[:, 1], ray_hit_right[:, 1], WORKING_SIZE[0], axis=1)
 
-        # Do linear interpolation for ray hits on floor
-        ray_hit = np.hstack([ray_hit_left, ray_hit_right])
-        ray_hits = np.linspace(ray_hit[:, 0:2], ray_hit[:, 2:3], WORKING_SIZE[0], axis=1)
+        # Correct way
+        ray_hits = np.dstack([ray_hits_x, ray_hits_y]) # row, column, (x, y)
 
         # Compute which cells on the floor we hit and get the right textures
         # ...
@@ -114,10 +113,12 @@ class Camera:
         texture_xys = (np.floor(ray_hits) % tex_size).astype(int)
 
         # Load texture
-        texture = surfarray.array2d(textures[15])
+        texture0 = surfarray.array2d(textures[15])
+        texture1 = surfarray.array2d(textures[10])
 
         # Compute scanlines
-        scanlines = texture[texture_xys[:,:,0], texture_xys[:,:,1]]
+        scanlines = texture0[texture_xys[:,:,0], texture_xys[:,:,1]]
+        scanlines[middle:] = texture1[texture_xys[middle:,:,0], texture_xys[middle:,:,1]]
 
         # Set surface to scanlines
         surface_array[:, :] = scanlines[:, :].T
