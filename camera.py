@@ -90,12 +90,16 @@ class Camera:
             right_ray = compute_direction(self.angle + angle_mod)
 
             # Compute how many ray "extensions" for the ray to hit the ground
-            look_offset = np.abs(row - WORKING_SIZE[1]/2)
+            look_offset = row - WORKING_SIZE[1]/2
             
             if look_offset == 0:
                 continue
+            
+            # WORKS FOR FLOORS
+            h_distance =  np.abs((self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
 
-            h_distance =  (self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod))
+            # WORKS FOR CEILINGS
+            #h_distance =  np.abs(((level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
 
             # Now compute, where each ray hits the ground
             floor_left_xy = left_ray * h_distance + self.position
@@ -116,24 +120,13 @@ class Camera:
             # Compute which cells on the floor we hit and get the right textures
             # ...
 
-            # Now compute floor pixels
-            texture_floor = surfarray.array2d(textures[10])
-            texture_ceiling = surfarray.array2d(textures[15])
+            # Now compute scanline pixels
+            texture_ceiling_floor = [surfarray.array2d(textures[15]), surfarray.array2d(textures[10])]
+            scanline = texture_ceiling_floor[int((np.sign(look_offset)+1)/2)][texture_xys[:,0], texture_xys[:,1]]
 
-            div = math.floor(WORKING_SIZE[0]/2)
-
-            floor_pixels = texture_floor[texture_xys[:div,0], texture_xys[:div,1]]
-            ceiling_pixels = texture_ceiling[texture_xys[div:,0], texture_xys[div:,1]]
-
-            #print(floor_pixels.shape)
-
-            #print(surface_array[[row], :].shape)
-            #print(floor_pixels.T[[0],:].shape)
-            #print(surface_array.shape)
 
             # Place into surface array
-            surface_array[:div, row] = floor_pixels
-            surface_array[div:, row] = ceiling_pixels
+            surface_array[:, row] = scanline
 
         # Return surface
         return surface
