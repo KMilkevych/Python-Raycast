@@ -96,7 +96,9 @@ class Camera:
                 continue
             
             # WORKS FOR FLOORS
-            h_distance =  np.abs((self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
+            #h_distance =  np.abs((self.height * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
+
+            h_distance = np.abs(np.array([level.tile_size[2] - self.height, self.height])[int((np.sign(look_offset)+1)/2)] * DISTANCE_TO_PROJECTION_PLANE / (look_offset * np.math.cos(angle_mod)))
 
             # WORKS FOR CEILINGS
             #h_distance =  np.abs(((level.tile_size[2] - self.height) * DISTANCE_TO_PROJECTION_PLANE) / (look_offset * np.math.cos(angle_mod)))
