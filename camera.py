@@ -79,10 +79,6 @@ class Camera:
         surface = pygame.Surface(WORKING_SIZE)
         surface_array = surfarray.pixels2d(surface)
 
-        # Create a blend surface
-        #blend_surface = pygame.Surface(WORKING_SIZE)
-        #blend_surface_array = surfarray.pixels3d(blend_surface)
-
         # Compute angle mod
         angle_mod = np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
 
@@ -141,39 +137,51 @@ class Camera:
 
         # Delete surface array
         del surface_array
+
+        # Create a blend surface
+        blend_surface = pygame.Surface(WORKING_SIZE)
+
+        # Compute intensities distances from h_distances
+        intensities = np.empty_like(h_distances)
+        highlights = np.empty_like(h_distances)
+
+        np.divide(INTENSITY_MULTIPLIER, h_distances, intensities)
+        np.clip(intensities, 0.0, 4.0, intensities)
+        np.subtract(intensities, 1.0, highlights)
+        np.divide(highlights, 8.0, highlights)
+
+        np.multiply(intensities, 255.0, intensities)
+        np.multiply(highlights, 255.0, highlights)
+
+        np.clip(intensities, 0.0, 255.0, intensities)
+        np.clip(highlights, 0.0, 255.0, highlights)      
+
+        intensities = np.tile(intensities, (1, WORKING_SIZE[0])).T
+        highlights = np.tile(highlights, (1, WORKING_SIZE[0])).T
+
+        # Create a blend surface array
+        blend_surface_array = surfarray.pixels3d(blend_surface)
+
+        # Apply intensities to blend_surface
+        blend_surface_array[:] = np.dstack([intensities, intensities, intensities])[:]
         
-        '''
-        # Compute true distances
-        distances = ray_hits
-        np.subtract(ray_hits, self.position, distances)
-        np.square(distances, distances)
-        distances = distances[:,:,0] + distances[:,:,1]
-        np.sqrt(distances, distances)
-
-        #print(distances)
-
-        # Compute intensity factors
-        intensities = distances
-        np.divide(INTENSITY_MULTIPLIER, intensities, intensities)
-        intensities[middle] = 0
-        np.clip(intensities, 0.0, 1.0, intensities)
-        np.multiply(intensities, 255, intensities)
-        intensities = intensities.T
-
-        #print(intensities)
-
-        
-
-        # Compute blend surface
-        blend_surface_array = np.dstack([intensities, intensities, intensities])
-
-        print(blend_surface_array)
-
+        # Dispose blend_surface_array
         del blend_surface_array
 
         # Apply blend surface
-        surface.blit(blend_surface, (0, 0))
-        '''
+        surface.blit(blend_surface, (0, 0), special_flags=pygame.BLEND_MULT)
+
+        # Create a blend surface array
+        blend_surface_array = surfarray.pixels3d(blend_surface)
+
+        # Apply intensities to blend_surface
+        blend_surface_array[:] = np.dstack([highlights, highlights, highlights])[:]
+        
+        # Dispose blend_surface_array
+        del blend_surface_array
+
+        # Apply blend surface
+        surface.blit(blend_surface, (0, 0), special_flags=pygame.BLEND_ADD)
 
         # Return surface
         return surface
