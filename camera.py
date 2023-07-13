@@ -229,13 +229,17 @@ class Camera:
 
             rayDirection = compute_direction(self.angle + angle_mod)
 
-            distance, cell, face, offset = self.do_dda(level, rayDirection)
-            distances[col] = (distance * np.math.cos(angle_mod), cell, face, offset)
+            hit_list = self.do_dda(level, rayDirection, angle_mod)
+            #distance, cell, face, offset = self.do_dda(level, rayDirection)
+            #distances[col] = (distance * np.math.cos(angle_mod), cell, face, offset)
+            distances[col] = hit_list
         
         # Return distances
         return distances
     
-    def do_dda(self, level, rayDirection):
+    def do_dda(self, level, rayDirection, angle_mod):
+
+        distance_adjust = np.math.cos(angle_mod)
 
         posX = self.position[0] / level.tile_size[0]
         posY = self.position[1] / level.tile_size[1]
@@ -269,9 +273,7 @@ class Camera:
             sideDistY = (mapY + 1.0 - posY) * deltaDistY
 
 
-        hit_walls = []
-
-        hit = False
+        hit_list = []
         side = 0
         face = 0
         offset = 0
@@ -293,10 +295,8 @@ class Camera:
                 break
 
             # Check if we hit a wall on mapX mapY
-            #print(mapY, mapX)
             cell = level.walls[mapY][mapX]
             if cell != 0:
-                hit = True
 
                 if (side == 0):
                     perpWallDist = (sideDistX - deltaDistX) * level.tile_size[0]
@@ -308,18 +308,19 @@ class Camera:
                     face = 2 if stepY == -1 else 3
 
                     offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
+                
+                # Add this to the hit-list
+                hit_list.append((perpWallDist * distance_adjust, cell, face, offset))
             
-            
-
-        return (perpWallDist, cell, face, offset)
+        return hit_list
 
     def column_height_from_distance(self, level, distance):
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
-    '''
+    
     def column_height_from_distance_with_modifier(self, level, distance, modifier):
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE * modifier
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
-    '''
+    

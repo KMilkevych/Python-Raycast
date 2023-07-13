@@ -126,26 +126,33 @@ while (running):
     # Print columns
     for col in range(WORKING_SIZE[0]):
 
-        # Extract data from dda
-        distance, cell, face, offset = distances[col]
+        previous_height_offset = WORKING_SIZE[1]
 
-        # Compute height of wall, and space/offset at top based on player height
-        height, height_offset = player.column_height_from_distance(level, distance)
+        for d_col in reversed(distances[col]):
+            # Extract data from dda
+            distance, cell, face, offset = d_col
 
-        # Compute modifiers
-        shade_factor = 1.0 - 0.2 * (face % 2)
+            # Compute height of wall, and space/offset at top based on player height
+            height, height_offset = player.column_height_from_distance_with_modifier(level, distance, cell/10)
+            height_offset += player.tilt_offset
 
-        intensify_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (distance * distance))
-        final_factor = min(shade_factor * intensify_factor * 255, 255)
+            if height_offset >= previous_height_offset:
+                continue
 
-        # Apply texture to column
-        column.blit(textures[cell], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
+            # Compute modifiers
+            shade_factor = 1.0 - 0.2 * (face % 2)
 
-        # Apply effects
-        column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
+            intensify_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (distance * distance))
+            final_factor = min(shade_factor * intensify_factor * 255, 255)
 
-        # Blit column
-        screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
+            # Apply texture to column
+            column.blit(textures[cell], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
+
+            # Apply effects
+            column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
+
+            # Blit column
+            screen.blit(pygame.transform.scale(column, (1, height)), (col,height_offset ))
 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
