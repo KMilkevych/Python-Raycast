@@ -114,9 +114,7 @@ while (running):
         # Compute modifiers
         shade_factor = 1.0 - 0.2 * (face % 2)
 
-        #intensify_factor = min(1.0, INTENSITY_MULTIPLIER / distance)
-        intensify_factor = min(4.0, INTENSITY_MULTIPLIER / distance)
-        highlight_factor = min(255 * max(intensify_factor - 1.0, 0.0) / 8.0, 255)
+        intensify_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (distance * distance))
         final_factor = min(shade_factor * intensify_factor * 255, 255)
 
         # Apply texture to column
@@ -124,7 +122,6 @@ while (running):
 
         # Apply effects
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
-        column.fill((highlight_factor, highlight_factor, highlight_factor), special_flags=BLEND_ADD)
 
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset))
