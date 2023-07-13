@@ -55,14 +55,16 @@ while (running):
                 running = False
 
             # If CTRL the crouch
-            if event.key == pygame.K_LCTRL:
-                player.height /= 2
+            #if event.key == pygame.K_LCTRL:
+            #    player.height /= 2
 
         if event.type == pygame.KEYUP:
 
             # If CTRL then un-crouch
-            if event.key == pygame.K_LCTRL:
-                player.height *= 2
+            #if event.key == pygame.K_LCTRL:
+            #    player.height *= 2
+
+            pass
 
 
     # Update position based on inputs   
@@ -75,14 +77,18 @@ while (running):
         player.turn(-1., dt)
     if keys[pygame.K_RIGHT]:
         player.turn(1., dt)
-    if keys[pygame.K_KP_8]:
+    if keys[pygame.K_LSHIFT]:
         player.height += 32 * dt
-    if keys[pygame.K_KP_2]:
+    if keys[pygame.K_LCTRL]:
         player.height -= 32 * dt
     if keys[pygame.K_KP_4]:
         player.turn(-1., dt)
     if keys[pygame.K_KP_6]:
         player.turn(1., dt)
+    if keys[pygame.K_KP_8]:
+        player.tilt(1., dt)
+    if keys[pygame.K_KP_2]:
+        player.tilt(-1., dt)
 
     # Clear the screen
     screen.fill(pygame.Color(0, 0, 0))
@@ -124,7 +130,7 @@ while (running):
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
         # Blit column
-        screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset))
+        screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)

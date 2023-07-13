@@ -21,9 +21,12 @@ class Camera:
         self.fov = PLAYER_FOV
         self.speed = PLAYER_SPEED
         self.turn_speed = PLAYER_TURN_SPEED
+        self.tilt_speed = PLAYER_TILT_SPEED
 
         self.position = np.array([position[0], position[1]])
         self.angle = angle
+        self.vangle = 0.
+        self.tilt_offset = 0
         self.direction = compute_direction(self.angle)
     
     def turn(self, direction, deltaTime):
@@ -33,6 +36,15 @@ class Camera:
 
         # Recompute direction
         self.direction = compute_direction(self.angle)
+    
+    def tilt(self, direction, deltaTime):
+
+        # Change vangle
+        self.vangle += direction * deltaTime * self.tilt_speed
+        self.vangle = np.clip(self.vangle, -np.pi/3, np.pi/3)
+
+        # Update tilt offset
+        self.tilt_offset = (np.tan(self.vangle) * DISTANCE_TO_PROJECTION_PLANE).astype(int)
     
     def move(self, direction, deltaTime):
 
@@ -87,8 +99,10 @@ class Camera:
         right_ray = compute_direction(self.angle + angle_mod)
 
         # Generate rows
-        middle = int(WORKING_SIZE[1]/2)
+        middle = max(0, int(WORKING_SIZE[1]/2 + self.tilt_offset))
         look_offsets = (np.arange(WORKING_SIZE[1]) - WORKING_SIZE[1]/2)[:, np.newaxis]
+        np.subtract(look_offsets, self.tilt_offset, look_offsets) # Apply look_offsets
+        
 
         # Compute h_distances
         h_distances = np.empty_like(look_offsets)
