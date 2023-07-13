@@ -51,6 +51,42 @@ class Camera:
         # Change position
         self.position += direction * self.direction * self.speed * deltaTime
     
+    def strafe(self, direction, deltaTime):
+
+        # Change position
+        self.position += direction * np.array([-self.direction[1], self.direction[0]]) * self.speed * deltaTime
+    
+    def strafe_collide(self, direction, deltaTime, level):
+
+        # Define wall margin
+        margin = 2
+        
+        # Compute new position
+        pos_change = direction * np.array([-self.direction[1], self.direction[0]]) * self.speed * deltaTime
+        new_pos = self.position + pos_change
+
+        # Get current cell position
+        cellX = math.floor(self.position[0] / level.tile_size[0])
+        cellY = math.floor(self.position[1] / level.tile_size[1])
+
+        # Get would-be cell position
+        ncellX = math.floor((new_pos[0] + np.sign(pos_change[0]) * margin) / level.tile_size[0])
+        ncellY = math.floor((new_pos[1] + np.sign(pos_change[1]) * margin) / level.tile_size[1])
+
+        # Check for both x movement and y movement
+        if level.walls[cellY][ncellX] != 0:
+            
+            # Go to the edge of that cell
+            new_pos[0] = ncellX * level.tile_size[0] - np.sign(pos_change[0]) * margin + (np.sign(pos_change[0]) - 1) * level.tile_size[0] / (-2)
+
+        if level.walls[ncellY][cellX] != 0:
+            
+            # Go to the edge of that cell
+            new_pos[1] = ncellY * level.tile_size[1] - np.sign(pos_change[1]) * margin + (np.sign(pos_change[1]) - 1) * level.tile_size[1] / (-2)
+            
+        # Update own position
+        self.position = new_pos
+    
     def move_collide(self, direction, deltaTime, level):
 
         # Define wall margin
