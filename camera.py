@@ -41,7 +41,7 @@ class Camera:
 
         # Change vangle
         self.vangle += direction * deltaTime * self.tilt_speed
-        self.vangle = np.clip(self.vangle, -np.pi/3, np.pi/3)
+        self.vangle = np.clip(self.vangle, -np.pi/2.5, np.pi/2.5)
 
         # Update tilt offset
         self.tilt_offset = (np.tan(self.vangle) * DISTANCE_TO_PROJECTION_PLANE).astype(int)
