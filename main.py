@@ -17,7 +17,6 @@ level = Level()
 # Game active objects
 player = camera.Camera(position=(8. * level.tile_size[0], 7. * level.tile_size[1]), angle=np.math.pi)
 
-
 # Initialize pygame window
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE, flags=DOUBLEBUF | RESIZABLE, depth=16, vsync=True)
@@ -30,6 +29,9 @@ textures = load_textures()
 
 # Make clock
 clock = pygame.time.Clock()
+
+# Mark mouse as not grabbed
+mouse_grabbed = False
 
 # Start game loop
 running = True
@@ -54,9 +56,12 @@ while (running):
             if event.key == pygame.K_ESCAPE:
                 running = False
 
-            # If CTRL the crouch
-            #if event.key == pygame.K_LCTRL:
-            #    player.height /= 2
+            # If TAB then toggle mouse cursor and "grab" window
+            if event.key == pygame.K_TAB:
+                pygame.mouse.set_visible(not(pygame.mouse.get_visible()))
+                pygame.event.set_grab(not(pygame.event.get_grab()))
+                pygame.mouse.set_pos(WINDOW_SIZE[0]/2, WINDOW_SIZE[1]/2)
+                mouse_grabbed = not(mouse_grabbed)
 
         if event.type == pygame.KEYUP:
 
@@ -69,10 +74,14 @@ while (running):
 
     # Update position based on inputs   
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_UP] or keys[pygame.K_w]:
         player.move_collide(1., dt, level)
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         player.move_collide(-1., dt, level)
+    if keys[pygame.K_a]:
+        player.strafe_collide(-1., dt, level)
+    if keys[pygame.K_d]:
+        player.strafe_collide(1., dt, level)
     if keys[pygame.K_LEFT]:
         player.turn(-1., dt)
     if keys[pygame.K_RIGHT]:
@@ -89,6 +98,12 @@ while (running):
         player.tilt(1., dt)
     if keys[pygame.K_KP_2]:
         player.tilt(-1., dt)
+    
+    # Update based on mouse movement
+    mouse_xy = pygame.mouse.get_rel()
+    if mouse_grabbed:
+        player.turn(mouse_xy[0] / (2*WORKING_SIZE[0]), 1)
+        player.tilt(-mouse_xy[1] / WORKING_SIZE[1], 1)
 
     # Clear the screen
     screen.fill(pygame.Color(0, 0, 0))
