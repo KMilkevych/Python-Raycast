@@ -232,12 +232,15 @@ class Camera:
             stepY = 1
             sideDistY = (mapY + 1.0 - posY) * deltaDistY
 
+
+        hit_walls = []
+
         hit = False
         side = 0
         face = 0
         offset = 0
         cell = 0
-        while not(hit):
+        while True:
 
             # Jump in x-direction or y-direction to next grid cell
             if (sideDistX < sideDistY):
@@ -248,11 +251,13 @@ class Camera:
                 sideDistY += deltaDistY
                 mapY += stepY
                 side = 1
-            
-            if mapY >= len(level.walls) or mapX >= len(level.walls[mapY]):
+
+            # Check if out of bounds
+            if mapY >= len(level.walls) or mapX >= len(level.walls[mapY]) or mapY < 0 or mapX < 0:
                 break
 
             # Check if we hit a wall on mapX mapY
+            #print(mapY, mapX)
             cell = level.walls[mapY][mapX]
             if cell != 0:
                 hit = True
@@ -267,7 +272,8 @@ class Camera:
                     face = 2 if stepY == -1 else 3
 
                     offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
-                    
+            
+            
 
         return (perpWallDist, cell, face, offset)
 
