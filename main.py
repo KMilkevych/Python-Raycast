@@ -128,9 +128,10 @@ while (running):
 
         previous_height_offset = WORKING_SIZE[1]
 
-        for d_col in reversed(distances[col]):
+        for d_col in reversed(range(0, len(distances[col]), 1)):
+
             # Extract data from dda
-            distance, cell, face, offset = d_col
+            distance, cell, face, offset = distances[col][d_col]
 
             # Compute height of wall, and space/offset at top based on player height
             height, height_offset = player.column_height_from_distance_with_modifier(level, distance, cell/10)
