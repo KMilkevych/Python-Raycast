@@ -128,7 +128,7 @@ while (running):
 
         previous_height_offset = WORKING_SIZE[1]
 
-        for d_col in reversed(range(0, len(distances[col]), 1)):
+        for d_col in reversed(range(0, len(distances[col]), 2)):
 
             # Extract data from dda
             distance, cell, face, offset = distances[col][d_col]
@@ -136,6 +136,18 @@ while (running):
             # Compute height of wall, and space/offset at top based on player height
             height, height_offset = player.column_height_from_distance_with_modifier(level, distance, cell/10)
             height_offset += player.tilt_offset
+
+            # Extract data for backface
+            distance_b, cell_b, face_b, offset_b = distances[col][d_col + 1]
+
+            height_b, height_offset_b = player.column_height_from_distance_with_modifier(level, distance_b, cell/10)
+            height_offset_b += player.tilt_offset
+
+            # If front face is shorter than back face
+            if height_offset > height_offset_b:
+
+                # Draw a green line (for now)
+                pygame.draw.line(screen, (0, 255, 0), (col, height_offset_b), (col, height_offset))
 
             if height_offset >= previous_height_offset:
                 continue
