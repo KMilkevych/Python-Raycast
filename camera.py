@@ -309,11 +309,7 @@ class Camera:
 
                     offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
                 
-                # Add this to the hit-list
-                hit_list.append((perpWallDist * distance_adjust, cell, face, offset))
-
                 # Compute the back-face hit
-                
                 backside_dist = 0
                 backside_offset = 0
                 if (sideDistX < sideDistY):
@@ -323,7 +319,12 @@ class Camera:
                     backside_dist = sideDistY * level.tile_size[1]
                     backside_offset = level.tile_size[0] - math.floor(self.position[0] + backside_dist * rayDirection[0]) % level.tile_size[0]
 
-                hit_list.append((backside_dist * distance_adjust, cell, face, backside_offset))
+                # Add this to the hit-list
+                hit_list.append((perpWallDist * distance_adjust, cell, face, offset, backside_dist * distance_adjust, backside_offset))
+
+                
+
+                #hit_list.append((backside_dist * distance_adjust, cell, face, backside_offset))
                 
             
         return hit_list

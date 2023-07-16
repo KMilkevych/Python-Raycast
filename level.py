@@ -26,7 +26,7 @@ class Level:
             [ 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
         ])
 
-        self.walls = np.tile(self.walls, (1, 1))
+        self.walls = np.tile(self.walls, (2, 2))
 
         self.floors = [
             [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
