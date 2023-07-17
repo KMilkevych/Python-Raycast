@@ -162,24 +162,17 @@ class Camera:
 
             sprite_pos_camera = (camera_view_inv @ sprite_pos_rel).T[0]
 
-            sprite_screen_x = int((WORKING_SIZE[0]/2) * (1 + sprite_pos_camera[0]/sprite_pos_camera[1]))
+            if sprite_pos_camera[1] > 0:
 
-            sprite_height = min(int(np.abs(WORKING_SIZE[1]/ sprite_pos_camera[1])), WORKING_SIZE[1])
-            sprite_width = sprite_height
+                sprite_screen_x = int((WORKING_SIZE[0]/2) * (1 + sprite_pos_camera[0]/sprite_pos_camera[1]))
 
-            surface.blit(pygame.transform.scale(sprite_textures[texture_id], (sprite_width, sprite_height)), (sprite_screen_x - sprite_width/2, WORKING_SIZE[1]/2 - sprite_height/2))
+                sprite_height = min(int(np.abs(WORKING_SIZE[1]/ sprite_pos_camera[1])), 2*WORKING_SIZE[1])
+                height, height_offset = self.column_height_from_distance(level, sprite_pos_camera[1] * DISTANCE_TO_PROJECTION_PLANE)
+                
 
-            # Get sprite position on the screen
-            #screen_x = sprite_screen_x[s]
-            #height, height_offset = self.column_height_from_distance(level, sprite_camera_proj[s, 1] * level.tile_size[0])
+                sprite_width = sprite_height
 
-            #print(screen_x, height_offset)
-
-            # Blit sprite if meets criteria
-            #if sprite_camera_proj[s, 1] > 0:
-
-            #surface.blit(pygame.transform.scale(sprite_textures[texture_id], (32, 32)), (screen_x - 16, WORKING_SIZE[1]/2 - 16))
-
+                surface.blit(pygame.transform.scale(sprite_textures[texture_id], (sprite_width, sprite_height)), (sprite_screen_x - sprite_width/2, height_offset + self.tilt_offset - sprite_height/2))
 
 
         return surface
@@ -377,6 +370,12 @@ class Camera:
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
+    
+    def height_and_offset_from_distance(self, levelheight, distance):
+        height = (levelheight / distance) * DISTANCE_TO_PROJECTION_PLANE
+        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
+        return (height, offset)
+
     '''
     def column_height_from_distance_with_modifier(self, level, distance, modifier):
         height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE * modifier

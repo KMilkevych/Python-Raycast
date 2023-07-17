@@ -64,11 +64,11 @@ class Level:
         ]
 
         self.sprites = [
-            #(0, 6, 5),      # (type/texture, xcell, ycell)
-            #(0, 6, 6),
+            (0, 6, 5),      # (type/texture, xcell, ycell)
+            (0, 6, 6),
             (1, 7.5, 10.5),
-            #(2, 8, 10),
+            (2, 8, 10),
             (1, 9.5, 10.5),
-            #(2, 10, 10)
+            (2, 10, 10)
         ]
 
