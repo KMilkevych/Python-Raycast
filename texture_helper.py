@@ -2,6 +2,22 @@ import pygame
 
 TEXTURE_SIZE = (32, 32)
 
+def load_sprite_textures():
+    barrel_texture = load_texture("textures/wolfenstein_textures/barrel.png")
+    barrel_texture.set_colorkey((0, 0, 0))
+
+    pillar_texture = load_texture("textures/wolfenstein_textures/pillar.png")
+    pillar_texture.set_colorkey((0, 0, 0))
+
+    greenlight_texture = load_texture("textures/wolfenstein_textures/greenlight.png")
+    greenlight_texture.set_colorkey((0, 0, 0))
+
+    return [
+        barrel_texture,     # 0
+        pillar_texture,     # 1
+        greenlight_texture  # 2
+    ]
+
 def load_textures():
 
     brick_texture_01 = load_texture("textures/brick_texture_01.png")

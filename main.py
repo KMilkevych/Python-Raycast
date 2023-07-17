@@ -26,6 +26,7 @@ pygame.display.set_caption("Raycasting")
 
 # Load textures
 textures = load_textures()
+sprite_textures = load_sprite_textures()
 
 # Make clock
 clock = pygame.time.Clock()
@@ -120,6 +121,10 @@ while (running):
     floors_and_ceilings_surface = player.do_floorcast_to_surface(level, textures)
     screen.blit(floors_and_ceilings_surface, (0, 0))
 
+    # Compute sprites
+    sprites_surface = player.do_spritedraw_to_surface(level, sprite_textures)
+    sprites_surface.set_colorkey((0, 0, 0))
+
     # Create pygame surface for a line
     column = pygame.Surface((1, TEXTURE_SIZE[1]))
 
@@ -146,6 +151,9 @@ while (running):
 
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
+
+    # Blit sprites
+    screen.blit(sprites_surface, (0, 0))
 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)

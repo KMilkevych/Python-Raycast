@@ -118,6 +118,72 @@ class Camera:
         # Update own position
         self.position = new_pos
     
+    def do_spritedraw_to_surface(self, level, sprite_textures):
+
+        # Create a surface
+        surface = pygame.Surface(WORKING_SIZE)
+        surface.set_colorkey((0, 0, 0))
+
+        # Compute sprite distances
+        sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1], x[2]]) - self.position / np.array([level.tile_size[0], level.tile_size[1]]))), level.sprites))
+        sprites_with_distances.sort(key=lambda x: x[3], reverse=True)
+
+        # Sprite positions
+        sprite_positions = np.array(level.sprites)[:, [1, 2]].astype(float)
+        sprite_positions -= self.position / np.array([level.tile_size[0], level.tile_size[1]])
+
+        # Camera plane
+        #camera_plane_length = np.math.tan(PLAYER_FOV / 2) * DISTANCE_TO_PROJECTION_PLANE
+        camera_plane_length = np.math.tan(PLAYER_FOV / 2)
+        camera_plane = np.array([-self.direction[1], self.direction[0]])[:, np.newaxis]
+        camera_plane = (camera_plane) * camera_plane_length
+
+        camera_view_inv = np.linalg.inv(np.hstack([camera_plane, self.direction[:, np.newaxis]]))
+
+        #print(camera_plane)
+        #print(self.direction)
+        #print(np.hstack([camera_plane, self.direction[:, np.newaxis]]))
+        #print("\n")
+        
+        # Camera plane projections
+        #sprite_camera_proj = (camera_view_inv @ sprite_positions.T).T
+
+        # Screen positions
+        #sprite_screen_x = ((sprite_camera_proj[:, 0] / sprite_camera_proj[:, 1] + 1) * (WORKING_SIZE[0]/2)).astype(int)
+
+
+        # Blit each sprite correctly to the surface
+        for s in range(len(sprites_with_distances)):
+            
+            # Get sprite
+            texture_id, cell_x, cell_y, distance = sprites_with_distances[s]
+
+            sprite_pos_rel = np.array([cell_x - self.position[0]/level.tile_size[0], cell_y - self.position[1]/level.tile_size[1]])[:, np.newaxis]
+
+            sprite_pos_camera = (camera_view_inv @ sprite_pos_rel).T[0]
+
+            sprite_screen_x = int((WORKING_SIZE[0]/2) * (1 + sprite_pos_camera[0]/sprite_pos_camera[1]))
+
+            sprite_height = min(int(np.abs(WORKING_SIZE[1]/ sprite_pos_camera[1])), WORKING_SIZE[1])
+            sprite_width = sprite_height
+
+            surface.blit(pygame.transform.scale(sprite_textures[texture_id], (sprite_width, sprite_height)), (sprite_screen_x - sprite_width/2, WORKING_SIZE[1]/2 - sprite_height/2))
+
+            # Get sprite position on the screen
+            #screen_x = sprite_screen_x[s]
+            #height, height_offset = self.column_height_from_distance(level, sprite_camera_proj[s, 1] * level.tile_size[0])
+
+            #print(screen_x, height_offset)
+
+            # Blit sprite if meets criteria
+            #if sprite_camera_proj[s, 1] > 0:
+
+            #surface.blit(pygame.transform.scale(sprite_textures[texture_id], (32, 32)), (screen_x - 16, WORKING_SIZE[1]/2 - 16))
+
+
+
+        return surface
+
     def do_floorcast_to_surface(self, level, textures):
 
         # Load textures as numpy array
