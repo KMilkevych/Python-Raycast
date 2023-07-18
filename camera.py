@@ -159,14 +159,12 @@ class Camera:
             draw_start = (int(sprite_screen_x - sprite_width/2), int(height_offset + self.tilt_offset - sprite_height/2))
             draw_end = (int(sprite_screen_x + sprite_width/2), int(height_offset + self.tilt_offset + sprite_height/2))
             sprite_size = (int(sprite_width), int(sprite_height))
-            sprite_distance = sprite_pos_camera[1] #* DISTANCE_TO_PROJECTION_PLANE
+            #sprite_distance = (sprite_pos_camera[0]/sprite_pos_camera[1]) * level.tile_size[0] * DISTANCE_TO_PROJECTION_PLANE
+            sprite_distance = np.linalg.norm(sprite_pos_rel.T * np.array([level.tile_size[0], level.tile_size[1]])) 
 
             if sprite_pos_camera[1] > 0 and (draw_start[0] < WORKING_SIZE[0]) and (draw_end[0] > 0):
 
                 sprite_data.append((texture_id, sprite_distance, sprite_size, draw_start, draw_end))
-
-                #surface.blit(pygame.transform.scale(sprite_textures[texture_id], (sprite_width, sprite_height)), (sprite_screen_x - sprite_width/2, height_offset + self.tilt_offset - sprite_height/2))
-
 
         return sprite_data
 
