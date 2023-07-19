@@ -152,6 +152,41 @@ while (running):
         screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
 
 
+    #print(sprite_data.shape)
+    #print(sprite_data)
+
+    # Iterate over each sprite in sprite_data
+    for s in range(sprite_data.shape[0]):
+
+        #print(sprite_data[s, :].shape)
+        #print(sprite_data[s, :])
+
+        # Extract data
+        texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y, draw_end_x, draw_end_y, y_depth = sprite_data[s, :]
+
+        texture_id = int(texture_id)
+        sprite_size = ((sprite_size_x), (sprite_size_y))
+        draw_start = (int(draw_start_x), int(draw_start_y))
+        draw_end = (int(draw_end_x), int(draw_end_y))
+
+        # Compute surface to draw from
+        sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
+        
+        # Create column surface
+        column = pygame.Surface((1, sprite_size[1]))
+        column.set_colorkey((0,0,0))
+
+
+        # Iterate and blit each column of the sprite
+        for col in range(draw_start[0], draw_end[0]):
+            if col > 0 and col < WORKING_SIZE[0] and sprite_distance < distances[col][0]:
+                # Blit to column
+                column.blit(sprite, (-(col - draw_start[0]), 0))
+
+                # Blit to screen
+                screen.blit(column, (col, draw_start[1]))
+
+    '''
     # Iterate over each sprite and draw as needed
     for sprite_datum in sprite_data:
         
@@ -175,7 +210,8 @@ while (running):
                 # Blit to screen
                 screen.blit(column, (col, draw_start[1]))
 
-    
+    '''
+                
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
     window.blit(frame, frame.get_rect())
