@@ -122,25 +122,16 @@ class Camera:
 
         # Compute self position in cell coordinates
         self_pos = self.position / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T
-        #print((np.array([1., 2.]) - self_pos).shape)
 
         # Compute sprite distances
-        sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1], x[2]]) - self_pos)), level.sprites))
+        sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1]*level.tile_size[0], x[2]*level.tile_size[1]]) - self.position)), level.sprites))
         sprites_with_distances.sort(key=lambda x: x[3], reverse=True)
 
-        #print((self.position / np.array([level.tile_size[0], level.tile_size[1]])).shape)
+        sprites_with_distances = np.array(sprites_with_distances)
 
         # Sprite positions
-        sprite_positions = np.array(level.sprites)[:, [1, 2]].astype(float)
-        #print(sprite_positions.shape)
-        #print(self.position.shape)
-        #print(np.array([level.tile_size[0], level.tile_size[1]]).shape)
-        #print((self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T.shape)
-        #print("\n")
-
+        sprite_positions = np.array(sprites_with_distances)[:, [1, 2]].astype(float)
         sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
-
-        #print(sprite_positions.shape)
 
         # Camera plane
         camera_plane_length = np.math.tan(PLAYER_FOV / 2)
@@ -149,34 +140,29 @@ class Camera:
 
         camera_view_inv = np.linalg.inv(np.hstack([camera_plane, self.direction[:, np.newaxis]]))
 
-        #print(camera_view_inv.shape)
-
-        # Use numpy magic to compute
-        #self_pos = self.position / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T
-
-        #print((camera_view_inv @ sprite_positions.T).T.shape)
-        #print((camera_view_inv @ sprite_positions.T).T)
-
         sprite_positions = (camera_view_inv @ sprite_positions.T).T
+
 
         sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
         sprite_sizes = np.hstack([sprite_heights, sprite_heights])
         _, sprite_offsets = self.column_height_from_distance(level, sprite_positions[:, [1]] * DISTANCE_TO_PROJECTION_PLANE)
+
+
         sprite_offsets += self.tilt_offset
         
         sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets - (sprite_sizes[:, [1]]/2)])
+        
+
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
         # Return sprite data
-        swd = np.array(sprites_with_distances)
-        sprite_data = np.hstack([swd[:, [0]], swd[:, [3]], sprite_sizes, sprite_draw_start, sprite_draw_end, sprite_positions[:, [1]]])
-        
+        sprite_data = np.hstack([sprites_with_distances[:, [0]], sprites_with_distances[:, [3]], sprite_sizes, sprite_draw_start, sprite_draw_end, sprite_positions[:, [1]]])
+
         rows_mask = (sprite_data[:, 8] > 0) & (sprite_data[:, 4] < WORKING_SIZE[0]) & (sprite_data[:, 6] > 0)
         sprite_data = sprite_data[rows_mask, :]
 
-        #print(sprite_data.shape)
 
         return sprite_data
 
