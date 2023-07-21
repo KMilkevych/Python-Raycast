@@ -141,32 +141,26 @@ class Camera:
 
         # Compute sprite positions in camera view
         sprite_positions = (camera_view_inv @ sprite_positions.T).T
+        sprite_distances = sprite_positions[:, [1]] * level.tile_size[0]
 
         # Compute horisontal offsets when drawing sprites on screen
         sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
-        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(sprites_with_distances[:, [2]], sprite_positions[:, [1]] * level.tile_size[0])
+        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(sprites_with_distances[:, [2]], sprite_distances[:])
         sprite_heights = np.clip(sprite_heights, 0, 2*WORKING_SIZE[1])
         sprite_offsets += self.tilt_offset
 
-        # sprites_with_distances[:, [2]]
-        #sprite_heights, sprite_offsets = self.height_and_offset_with_alignment(level.tile_size[2], sprite_positions[:, [1]] * level.tile_size[2], 0.)
-        #sprite_heights = np.clip(sprite_heights * (sprites_with_distances[:, [2]] / TEXTURE_SIZE[1]), 0, 2*WORKING_SIZE[1])
-        #sprite_offsets += self.tilt_offset
-
         # Compute sprite dimensions
-        #sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
         sprite_sizes = np.hstack([sprite_heights, sprite_heights])
 
         
         # Compute draw_start and draw_end
-        #sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets - (sprite_sizes[:, [1]]/2)])
         sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets])
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
         # Build sprite data
-        sprite_data = np.hstack([sprites_with_distances[:, [1]], sprites_with_distances[:, [5]], sprite_sizes, sprite_draw_start])
+        sprite_data = np.hstack([sprites_with_distances[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
 
         # Remove inappropriate sprite data using row mask
         rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < WORKING_SIZE[0]) & (sprite_positions[:, 1] > 0)
@@ -227,8 +221,8 @@ class Camera:
 
         # Compute which texture ids the cells hit by rays correspond to
         cell_texture_ids = np.empty((WORKING_SIZE[1], WORKING_SIZE[0])).astype(int)
-        cell_texture_ids[:middle] = ceiling[cells[:middle,:,0], cells[:middle,:,1]]
-        cell_texture_ids[middle:] = floor[cells[middle:,:,0], cells[middle:,:,1]]
+        cell_texture_ids[:middle] = ceiling[cells[:middle,:,1], cells[:middle,:,0]]
+        cell_texture_ids[middle:] = floor[cells[middle:,:,1], cells[middle:,:,0]]
 
         # Compute coordinates on texture for each ray
         tex_size = np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])[np.newaxis, np.newaxis, :]
