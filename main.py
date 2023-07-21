@@ -83,18 +83,14 @@ while (running):
         player.strafe_collide(-1., dt, level)
     if keys[pygame.K_d]:
         player.strafe_collide(1., dt, level)
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_KP_4]:
         player.turn(-1., dt)
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_KP_6]:
         player.turn(1., dt)
     if keys[pygame.K_LSHIFT]:
         player.height += 32 * dt
     if keys[pygame.K_LCTRL]:
         player.height -= 32 * dt
-    if keys[pygame.K_KP_4]:
-        player.turn(-1., dt)
-    if keys[pygame.K_KP_6]:
-        player.turn(1., dt)
     if keys[pygame.K_KP_8]:
         player.tilt(1., dt)
     if keys[pygame.K_KP_2]:
@@ -131,10 +127,13 @@ while (running):
     for col in range(WORKING_SIZE[0]):
 
         # Extract data from dda
-        distance, cell, face, offset = distances[col]
+        distance, (mapX, mapY), face, offset = distances[col]
+
+        # Extract wall data from walls
+        wall_tag, texture_id, wall_height = level.walls[mapY][mapX]
 
         # Compute height of wall, and space/offset at top based on player height
-        height, height_offset = player.column_height_from_distance(level, distance)
+        height, height_offset = player.height_and_offset_from_distance(wall_height, distance)
 
         # Compute modifiers
         shade_factor = 1.0 - 0.2 * (face % 2)
@@ -143,7 +142,7 @@ while (running):
         final_factor = min(shade_factor * intensify_factor * 255, 255)
 
         # Apply texture to column
-        column.blit(textures[cell], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
+        column.blit(textures[texture_id], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
 
         # Apply effects
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
@@ -186,31 +185,6 @@ while (running):
                 # Blit to screen
                 screen.blit(column, (col, draw_start[1]))
 
-    '''
-    # Iterate over each sprite and draw as needed
-    for sprite_datum in sprite_data:
-        
-        # Extract data
-        texture_id, sprite_distance, sprite_size, draw_start, draw_end = sprite_datum
-
-        # Compute surface to draw from
-        sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
-        
-        # Create column surface
-        column = pygame.Surface((1, sprite_size[1]))
-        column.set_colorkey((0,0,0))
-
-
-        # Iterate and blit each column of the sprite
-        for col in range(draw_start[0], draw_end[0]):
-            if col > 0 and col < WORKING_SIZE[0] and sprite_distance < distances[col][0]:
-                # Blit to column
-                column.blit(sprite, (-(col - draw_start[0]), 0))
-
-                # Blit to screen
-                screen.blit(column, (col, draw_start[1]))
-
-    '''
                 
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)

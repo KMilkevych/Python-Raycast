@@ -51,27 +51,6 @@ def load_textures():
     err = pygame.Surface(TEXTURE_SIZE)
     err.fill((255, 0, 255))
 
-    '''
-    return {
-        1: dark_gray,
-        2: brick_texture_01,
-        3: brick_texture_02,
-        4: brick_texture_03,
-        5: red,
-        6: green,
-        7: blue,
-        8: blue_stone,
-        9: color_stone,
-        10: grey_stone,
-        11: mossy_stone,
-        12: purple_stone,
-        13: red_brick,
-        14: eagle_brick,
-        15: wood,
-        0: err
-    }
-    '''
-
     return [
         err,                # 0
         dark_gray,          # 1

@@ -74,12 +74,12 @@ class Camera:
         ncellY = math.floor((new_pos[1] + np.sign(pos_change[1]) * margin) / level.tile_size[1])
 
         # Check for both x movement and y movement
-        if level.walls[cellY][ncellX] != 0:
+        if level.walls[cellY][ncellX][0] != 0:
             
             # Go to the edge of that cell
             new_pos[0] = ncellX * level.tile_size[0] - np.sign(pos_change[0]) * margin + (np.sign(pos_change[0]) - 1) * level.tile_size[0] / (-2)
 
-        if level.walls[ncellY][cellX] != 0:
+        if level.walls[ncellY][cellX][0] != 0:
             
             # Go to the edge of that cell
             new_pos[1] = ncellY * level.tile_size[1] - np.sign(pos_change[1]) * margin + (np.sign(pos_change[1]) - 1) * level.tile_size[1] / (-2)
@@ -105,12 +105,12 @@ class Camera:
         ncellY = math.floor((new_pos[1] + np.sign(pos_change[1]) * margin) / level.tile_size[1])
 
         # Check for both x movement and y movement
-        if level.walls[cellY][ncellX] != 0:
+        if level.walls[cellY][ncellX][0] != 0:
             
             # Go to the edge of that cell
             new_pos[0] = ncellX * level.tile_size[0] - np.sign(pos_change[0]) * margin + (np.sign(pos_change[0]) - 1) * level.tile_size[0] / (-2)
 
-        if level.walls[ncellY][cellX] != 0:
+        if level.walls[ncellY][cellX][0] != 0:
             
             # Go to the edge of that cell
             new_pos[1] = ncellY * level.tile_size[1] - np.sign(pos_change[1]) * margin + (np.sign(pos_change[1]) - 1) * level.tile_size[1] / (-2)
@@ -121,7 +121,7 @@ class Camera:
     def compute_sprite_data(self, level):
 
         # Compute self position in cell coordinates
-        self_pos = self.position / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T
+        #self_pos = self.position / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T
 
         # Compute sprite distances
         sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1]*level.tile_size[0], x[2]*level.tile_size[1]]) - self.position)), level.sprites))
@@ -147,7 +147,7 @@ class Camera:
 
         sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
         sprite_sizes = np.hstack([sprite_heights, sprite_heights])
-        _, sprite_offsets = self.column_height_from_distance(level, sprite_positions[:, [1]] * DISTANCE_TO_PROJECTION_PLANE)
+        _, sprite_offsets = self.height_and_offset_from_distance(level.tile_size[2], sprite_positions[:, [1]] * DISTANCE_TO_PROJECTION_PLANE)
 
 
         sprite_offsets += self.tilt_offset
@@ -165,40 +165,6 @@ class Camera:
 
 
         return sprite_data
-
-        '''
-        # Create array to hold computed sprite_data
-        sprite_data = []
-
-        # Blit each sprite correctly to the surface
-        for s in range(len(sprites_with_distances)):
-            
-            # Get sprite
-            texture_id, cell_x, cell_y, distance = sprites_with_distances[s]
-
-            sprite_pos_rel = np.array([cell_x - self.position[0]/level.tile_size[0], cell_y - self.position[1]/level.tile_size[1]])[:, np.newaxis]
-
-            sprite_pos_camera = (camera_view_inv @ sprite_pos_rel).T[0]
-
-            sprite_screen_x = int((WORKING_SIZE[0]/2) * (1 + sprite_pos_camera[0]/sprite_pos_camera[1]))
-
-            sprite_height = min(int(np.abs(WORKING_SIZE[1]/ sprite_pos_camera[1])), 2*WORKING_SIZE[1])
-            height, height_offset = self.column_height_from_distance(level, sprite_pos_camera[1] * DISTANCE_TO_PROJECTION_PLANE)
-
-            sprite_width = sprite_height
-
-            draw_start = (int(sprite_screen_x - sprite_width/2), int(height_offset + self.tilt_offset - sprite_height/2))
-            draw_end = (int(sprite_screen_x + sprite_width/2), int(height_offset + self.tilt_offset + sprite_height/2))
-            sprite_size = (int(sprite_width), int(sprite_height))
-            #sprite_distance = (sprite_pos_camera[0]/sprite_pos_camera[1]) * level.tile_size[0] * DISTANCE_TO_PROJECTION_PLANE
-            sprite_distance = np.linalg.norm(sprite_pos_rel.T * np.array([level.tile_size[0], level.tile_size[1]])) 
-
-            if sprite_pos_camera[1] > 0 and (draw_start[0] < WORKING_SIZE[0]) and (draw_end[0] > 0):
-
-                sprite_data.append((texture_id, sprite_distance, sprite_size, draw_start, draw_end))
-
-        return sprite_data
-        '''
 
     def do_floorcast_to_surface(self, level, textures):
 
@@ -311,8 +277,8 @@ class Camera:
 
             rayDirection = compute_direction(self.angle + angle_mod)
 
-            distance, cell, face, offset = self.do_dda(level, rayDirection)
-            distances[col] = (distance * np.math.cos(angle_mod), cell, face, offset)
+            distance, (mapX, mapY), face, offset = self.do_dda(level, rayDirection)
+            distances[col] = (distance * np.math.cos(angle_mod), (mapX, mapY), face, offset)
         
         # Return distances
         return distances
@@ -354,7 +320,6 @@ class Camera:
         side = 0
         face = 0
         offset = 0
-        cell = 0
         while not(hit):
 
             # Jump in x-direction or y-direction to next grid cell
@@ -371,8 +336,8 @@ class Camera:
                 break
 
             # Check if we hit a wall on mapX mapY
-            cell = level.walls[mapY][mapX]
-            if cell != 0:
+            wall_tag = level.walls[mapY][mapX][0]
+            if wall_tag != 0:
                 hit = True
 
                 if (side == 0):
@@ -387,21 +352,17 @@ class Camera:
                     offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
                     
 
-        return (perpWallDist, cell, face, offset)
+        return (perpWallDist, (mapX, mapY), face, offset)
 
-    def column_height_from_distance(self, level, distance):
-        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
+   
+    def height_and_offset_from_distance(self, true_height, distance):
+        height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
     
-    def height_and_offset_from_distance(self, levelheight, distance):
-        height = (levelheight / distance) * DISTANCE_TO_PROJECTION_PLANE
-        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
-        return (height, offset)
-
     '''
-    def column_height_from_distance_with_modifier(self, level, distance, modifier):
-        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE * modifier
+     def column_height_from_distance(self, level, distance):
+        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
     '''
