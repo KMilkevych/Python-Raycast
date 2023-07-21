@@ -13,7 +13,7 @@ class Level:
 
         AIR = (0, 0, 0)
 
-        W_0 = (1, 1, 128)    # dark gray
+        W_0 = (1, 1, 64)    # dark gray
 
         W_1 = (1, 8, 64)    # blue_stone
         W_2 = (1, 9, 64)    # color_stone
@@ -50,7 +50,9 @@ class Level:
 
 
         # Each floor/ceiling is defined by texture id
+        # TODO: allow a "transparent" texture to make holes in floors and ceilings
 
+        TRN = (16)  # Transparent
         F_0 = (1)   # Dark gray
 
         F_1 = (8)    # blue_stone
@@ -108,16 +110,29 @@ class Level:
         ])
 
         # Each sprite is defined by a sprite object (tag/type, texture, height/z-pos) and a position in the game world (x, y)
-        BARREL = (1, 0, 64)
-        PILLAR = (1, 1, 64)
-        LAMP = (0, 2, 64)
+        BARREL = [1, 0, 32]
+        PILLAR = [1, 1, 32]
+        LAMP = [0, 2, 64]
 
-        self.sprites = [
-            (0, 6, 5),      # (type/texture, xcell, ycell)
-            (0, 6, 6),
-            (1, 7.5, 10.5),
-            (2, 8, 10),
-            (1, 9.5, 10.5),
-            (2, 10, 10)
-        ]
+        sprite_positions = np.array([
+            [6.5, 5.5],
+            [6.5, 6.5],
+            [7.5, 10.5],
+            [8., 10.],
+            [9.5, 10.5],
+            [10.5, 10.5]
+        ])
 
+        sprite_types = np.vstack([
+            BARREL,
+            BARREL,
+            PILLAR,
+            PILLAR,
+            LAMP,
+            LAMP
+        ])
+
+
+        self.sprites = np.hstack([
+            sprite_types, sprite_positions
+        ])

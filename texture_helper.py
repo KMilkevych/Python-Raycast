@@ -48,6 +48,9 @@ def load_textures():
     dark_gray = pygame.Surface(TEXTURE_SIZE)
     dark_gray.fill((50, 50, 50))
 
+    transparent = pygame.Surface(TEXTURE_SIZE)#.convert_alpha()
+    transparent.set_colorkey((0, 0, 0))
+
     err = pygame.Surface(TEXTURE_SIZE)
     err.fill((255, 0, 255))
 
@@ -67,7 +70,8 @@ def load_textures():
         purple_stone,       # 12
         red_brick,          # 13
         eagle_brick,        # 14
-        wood                # 15
+        wood,               # 15
+        transparent         # 16
     ]
 
 def load_texture(filename):

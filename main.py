@@ -106,19 +106,17 @@ while (running):
     screen.fill(pygame.Color(0, 0, 0))
 
     # Draw sky and ground
-    pygame.draw.rect(screen, SKY_COLOR, pygame.Rect((0, 0), (WORKING_SIZE[0], WORKING_SIZE[1]/2 )))
-    pygame.draw.rect(screen, GROUND_COLOR, pygame.Rect((0, WORKING_SIZE[1]/2), (WORKING_SIZE[0], WORKING_SIZE[1]/2)))
-
-
-    # Get raycast distances
-    distances = player.do_raycast(level)
+    middle = max(0, int(WORKING_SIZE[1]/2 + player.tilt_offset))
+    pygame.draw.rect(screen, SKY_COLOR, pygame.Rect((0, 0), (WORKING_SIZE[0], middle)))
+    pygame.draw.rect(screen, GROUND_COLOR, pygame.Rect((0, middle), (WORKING_SIZE[0], WORKING_SIZE[1] - middle)))
 
     # Compute floors and ceilings
     floors_and_ceilings_surface = player.do_floorcast_to_surface(level, textures)
+    floors_and_ceilings_surface.set_colorkey((0, 0, 0))
     screen.blit(floors_and_ceilings_surface, (0, 0))
 
-    # Compute sprites
-    sprite_data = player.compute_sprite_data(level)
+    # Get raycast distances
+    distances = player.do_raycast(level)
 
     # Create pygame surface for a line
     column = pygame.Surface((1, TEXTURE_SIZE[1]))
@@ -150,23 +148,22 @@ while (running):
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
 
-
-    #print(sprite_data.shape)
-    #print(sprite_data)
+    # Compute sprites
+    sprite_data = player.compute_sprite_data(level)
 
     # Iterate over each sprite in sprite_data
     for s in range(sprite_data.shape[0]):
 
-        #print(sprite_data[s, :].shape)
-        #print(sprite_data[s, :])
-
         # Extract data
-        texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y, draw_end_x, draw_end_y, y_depth = sprite_data[s, :]
+        texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y = sprite_data[s, :]
 
         texture_id = int(texture_id)
         sprite_size = ((sprite_size_x), (sprite_size_y))
         draw_start = (int(draw_start_x), int(draw_start_y))
-        draw_end = (int(draw_end_x), int(draw_end_y))
+        draw_end = (int(draw_start_x + sprite_size_x), int(draw_start_y + sprite_size_y))
+
+        # Compute intensity
+        final_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
 
         # Compute surface to draw from
         sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
@@ -179,8 +176,12 @@ while (running):
         # Iterate and blit each column of the sprite
         for col in range(draw_start[0], draw_end[0]):
             if col > 0 and col < WORKING_SIZE[0] and sprite_distance < distances[col][0]:
+                
                 # Blit to column
                 column.blit(sprite, (-(col - draw_start[0]), 0))
+
+                # Apply effects
+                column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
                 # Blit to screen
                 screen.blit(column, (col, draw_start[1]))
