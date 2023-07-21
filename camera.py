@@ -120,13 +120,18 @@ class Camera:
     
     def compute_sprite_data(self, level):
 
+        # Compute self position in cell coordinates
+        self_pos = self.position / np.array([level.tile_size[0], level.tile_size[1]])[:, np.newaxis].T
+
         # Compute sprite distances
-        sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1], x[2]]) - self.position / np.array([level.tile_size[0], level.tile_size[1]]))), level.sprites))
+        sprites_with_distances = list(map(lambda x: (x[0], x[1], x[2], np.linalg.norm(np.array([x[1]*level.tile_size[0], x[2]*level.tile_size[1]]) - self.position)), level.sprites))
         sprites_with_distances.sort(key=lambda x: x[3], reverse=True)
 
+        sprites_with_distances = np.array(sprites_with_distances)
+
         # Sprite positions
-        sprite_positions = np.array(level.sprites)[:, [1, 2]].astype(float)
-        sprite_positions -= self.position / np.array([level.tile_size[0], level.tile_size[1]])
+        sprite_positions = np.array(sprites_with_distances)[:, [1, 2]].astype(float)
+        sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
 
         # Camera plane
         camera_plane_length = np.math.tan(PLAYER_FOV / 2)
@@ -135,7 +140,33 @@ class Camera:
 
         camera_view_inv = np.linalg.inv(np.hstack([camera_plane, self.direction[:, np.newaxis]]))
 
+        sprite_positions = (camera_view_inv @ sprite_positions.T).T
 
+
+        sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
+
+        sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
+        sprite_sizes = np.hstack([sprite_heights, sprite_heights])
+        _, sprite_offsets = self.column_height_from_distance(level, sprite_positions[:, [1]] * DISTANCE_TO_PROJECTION_PLANE)
+
+
+        sprite_offsets += self.tilt_offset
+        
+        sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets - (sprite_sizes[:, [1]]/2)])
+        
+
+        sprite_draw_end = sprite_draw_start + sprite_sizes
+
+        # Return sprite data
+        sprite_data = np.hstack([sprites_with_distances[:, [0]], sprites_with_distances[:, [3]], sprite_sizes, sprite_draw_start, sprite_draw_end, sprite_positions[:, [1]]])
+
+        rows_mask = (sprite_data[:, 8] > 0) & (sprite_data[:, 4] < WORKING_SIZE[0]) & (sprite_data[:, 6] > 0)
+        sprite_data = sprite_data[rows_mask, :]
+
+
+        return sprite_data
+
+        '''
         # Create array to hold computed sprite_data
         sprite_data = []
 
@@ -159,16 +190,15 @@ class Camera:
             draw_start = (int(sprite_screen_x - sprite_width/2), int(height_offset + self.tilt_offset - sprite_height/2))
             draw_end = (int(sprite_screen_x + sprite_width/2), int(height_offset + self.tilt_offset + sprite_height/2))
             sprite_size = (int(sprite_width), int(sprite_height))
-            sprite_distance = sprite_pos_camera[1] #* DISTANCE_TO_PROJECTION_PLANE
+            #sprite_distance = (sprite_pos_camera[0]/sprite_pos_camera[1]) * level.tile_size[0] * DISTANCE_TO_PROJECTION_PLANE
+            sprite_distance = np.linalg.norm(sprite_pos_rel.T * np.array([level.tile_size[0], level.tile_size[1]])) 
 
             if sprite_pos_camera[1] > 0 and (draw_start[0] < WORKING_SIZE[0]) and (draw_end[0] > 0):
 
                 sprite_data.append((texture_id, sprite_distance, sprite_size, draw_start, draw_end))
 
-                #surface.blit(pygame.transform.scale(sprite_textures[texture_id], (sprite_width, sprite_height)), (sprite_screen_x - sprite_width/2, height_offset + self.tilt_offset - sprite_height/2))
-
-
         return sprite_data
+        '''
 
     def do_floorcast_to_surface(self, level, textures):
 

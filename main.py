@@ -151,10 +151,42 @@ while (running):
         # Blit column
         screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + player.tilt_offset))
 
-    
-    # Create surfarray for the screen
-    screen_surfarray = pygame.surfarray.pixels2d(screen)
 
+    #print(sprite_data.shape)
+    #print(sprite_data)
+
+    # Iterate over each sprite in sprite_data
+    for s in range(sprite_data.shape[0]):
+
+        #print(sprite_data[s, :].shape)
+        #print(sprite_data[s, :])
+
+        # Extract data
+        texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y, draw_end_x, draw_end_y, y_depth = sprite_data[s, :]
+
+        texture_id = int(texture_id)
+        sprite_size = ((sprite_size_x), (sprite_size_y))
+        draw_start = (int(draw_start_x), int(draw_start_y))
+        draw_end = (int(draw_end_x), int(draw_end_y))
+
+        # Compute surface to draw from
+        sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
+        
+        # Create column surface
+        column = pygame.Surface((1, sprite_size[1]))
+        column.set_colorkey((0,0,0))
+
+
+        # Iterate and blit each column of the sprite
+        for col in range(draw_start[0], draw_end[0]):
+            if col > 0 and col < WORKING_SIZE[0] and sprite_distance < distances[col][0]:
+                # Blit to column
+                column.blit(sprite, (-(col - draw_start[0]), 0))
+
+                # Blit to screen
+                screen.blit(column, (col, draw_start[1]))
+
+    '''
     # Iterate over each sprite and draw as needed
     for sprite_datum in sprite_data:
         
@@ -163,38 +195,23 @@ while (running):
 
         # Compute surface to draw from
         sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
-        sprite.set_colorkey((0, 0, 0))
+        
+        # Create column surface
+        column = pygame.Surface((1, sprite_size[1]))
+        column.set_colorkey((0,0,0))
 
-        # Get surfarray for this
-        sprite_surfarray = pygame.surfarray.array2d(sprite)
 
         # Iterate and blit each column of the sprite
         for col in range(draw_start[0], draw_end[0]):
             if col > 0 and col < WORKING_SIZE[0] and sprite_distance < distances[col][0]:
+                # Blit to column
+                column.blit(sprite, (-(col - draw_start[0]), 0))
 
-                print(col, draw_start[1], draw_end[1])
+                # Blit to screen
+                screen.blit(column, (col, draw_start[1]))
+
+    '''
                 
-                # Set on surfarray
-
-                y0 = max(draw_start[1], 0)
-                y1 = min(draw_end[1], WORKING_SIZE[1] - 1)
-
-                ydiff0 = y0 - draw_start[1]
-                ydiff1 = y1 - draw_end[1]
-
-                print(ydiff0, ydiff1)
-                print(screen_surfarray[col, y0:y1].shape)
-                print(sprite_surfarray[col - draw_start[0],ydiff0:ydiff1].shape)
-
-                screen_surfarray[col, y0:y1] = sprite_surfarray[col - draw_start[0],ydiff0:(ydiff0 + sprite_size[1])]
-
-    
-    # Unlock screen surface
-    del screen_surfarray
-    
-    # Blit sprites
-    #screen.blit(sprites_surface, (0, 0))
-
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
     window.blit(frame, frame.get_rect())
