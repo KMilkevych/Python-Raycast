@@ -5,7 +5,10 @@ class Level:
     def __init__(self):
 
         self.tile_size = np.array([32, 32, 64])
-        self.ceiling_height = 128
+        self.ceiling_height = 96
+
+        self.player_start = (2.5, 13.5, np.pi + np.pi/2)
+        #self.player_start_dir = (np.pi/2)
 
         # Each wall is defined by a tag / wall type, a texture and height
         # type 0 == empty space / not wall
@@ -29,23 +32,23 @@ class Level:
         W11 = (1, 7, 64)    # brick_texture_03
 
         self.walls = np.array([
-            [W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],
-            [W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0],
+            # 00   01   02   03   04   05   06   07   08   09   10   11   12   13   14   15
+            [W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0],   # 00
+            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 01
+            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 02
+            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 03
+            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 04
+            [W_0, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 05
+            [W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 06
+            [W_6, W_6, W_6, W_6, W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 07
+            [W_6, AIR, AIR, AIR, W_7, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 08
+            [W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 09
+            [W_6, AIR, AIR, AIR, W_7, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 10
+            [W_0, W_6, AIR, W_6, W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 11
+            [W_0, W_6, AIR, W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 12
+            [W_0, W_6, AIR, W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 13
+            [W_0, W_6, W_6, W_6, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, AIR, W_0],   # 14
+            [W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0, W_0],   # 15
         ])
 
 
@@ -110,9 +113,9 @@ class Level:
         ])
 
         # Each sprite is defined by a sprite object (tag/type, texture, height/z-pos) and a position in the game world (x, y)
-        BARREL = [1, 0, 32]
-        PILLAR = [1, 1, 32]
-        LAMP = [0, 2, 64]
+        BARREL = [1, 0, 64]
+        PILLAR = [1, 1, 64]
+        LAMP = [0, 2, 96]
 
         sprite_positions = np.array([
             [6.5, 5.5],

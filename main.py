@@ -11,11 +11,15 @@ from texture_helper import *
 
 from level import *
 
+# Font for writing text
+pygame.font.init()
+main_font = pygame.font.SysFont("Dejavu Sans", 16)
+
 # Level
 level = Level()
 
 # Game active objects
-player = camera.Camera(position=(8. * level.tile_size[0], 7. * level.tile_size[1]), angle=np.math.pi)
+player = camera.Camera(position=(level.player_start[0] * level.tile_size[0], level.player_start[1] * level.tile_size[1]), angle=level.player_start[2])
 
 # Initialize pygame window
 pygame.init()
@@ -30,6 +34,9 @@ sprite_textures = load_sprite_textures()
 
 # Make clock
 clock = pygame.time.Clock()
+
+# Mark debug info as not shown
+show_debug = False
 
 # Mark mouse as not grabbed
 mouse_grabbed = False
@@ -63,6 +70,10 @@ while (running):
                 pygame.event.set_grab(not(pygame.event.get_grab()))
                 pygame.mouse.set_pos(WINDOW_SIZE[0]/2, WINDOW_SIZE[1]/2)
                 mouse_grabbed = not(mouse_grabbed)
+            
+            # If X toggle debug info
+            if event.key == pygame.K_x:
+                show_debug = not(show_debug)
 
         if event.type == pygame.KEYUP:
 
@@ -186,7 +197,16 @@ while (running):
                 # Blit to screen
                 screen.blit(column, (col, draw_start[1]))
 
-                
+    
+    # Draw debug information to screen
+    if show_debug:
+        debug_text = "pos: {0}\ndir: {1}\nang: {2}".format(np.around(np.hstack([player.position, player.height]), 2), np.around(player.direction, 2), np.around(player.angle, 2))
+        debug_info = [main_font.render(line, False, (255, 255, 255)) for line in debug_text.split("\n")]
+        heightsum = 0
+        for info in debug_info:
+            screen.blit(info, (2, heightsum))
+            heightsum += info.get_height()
+
     # Paste screen frame
     frame = pygame.transform.scale(screen, WINDOW_SIZE)
     window.blit(frame, frame.get_rect())

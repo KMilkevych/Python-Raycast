@@ -145,16 +145,24 @@ class Camera:
         # Compute horisontal offsets when drawing sprites on screen
         sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
+        # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
+        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(sprites_with_distances[:, [2]], sprite_positions[:, [1]] * level.tile_size[0])
+        sprite_heights = np.clip(sprite_heights, 0, 2*WORKING_SIZE[1])
+        sprite_offsets += self.tilt_offset
+
+        # sprites_with_distances[:, [2]]
+        #sprite_heights, sprite_offsets = self.height_and_offset_with_alignment(level.tile_size[2], sprite_positions[:, [1]] * level.tile_size[2], 0.)
+        #sprite_heights = np.clip(sprite_heights * (sprites_with_distances[:, [2]] / TEXTURE_SIZE[1]), 0, 2*WORKING_SIZE[1])
+        #sprite_offsets += self.tilt_offset
+
         # Compute sprite dimensions
-        sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
+        #sprite_heights = np.clip(np.abs(WORKING_SIZE[1] / sprite_positions[:, [1]]).astype(int), 0, 2*WORKING_SIZE[1])
         sprite_sizes = np.hstack([sprite_heights, sprite_heights])
 
-        # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
-        _, sprite_offsets = self.height_and_offset_from_distance(sprites_with_distances[:, [2]], sprite_positions[:, [1]] * level.tile_size[0])
-        sprite_offsets += self.tilt_offset
         
         # Compute draw_start and draw_end
-        sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets - (sprite_sizes[:, [1]]/2)])
+        #sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets - (sprite_sizes[:, [1]]/2)])
+        sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets])
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
         # Build sprite data
@@ -359,6 +367,12 @@ class Camera:
     def height_and_offset_from_distance(self, true_height, distance):
         height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
+        return (height, offset)
+    
+    def height_and_offset_with_alignment(self, true_height, distance, v_offset):
+        height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
+        v_height = ((true_height + v_offset) / distance) * DISTANCE_TO_PROJECTION_PLANE
+        offset =  WORKING_SIZE[1]/2 - v_height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
     
     '''
