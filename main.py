@@ -151,7 +151,7 @@ while (running):
         final_factor = min(shade_factor * intensify_factor * 255, 255)
 
         # Apply texture to column
-        column.blit(textures[texture_id], ((-1) * (offset % TEXTURE_SIZE[0]), 0))
+        column.blit(textures[texture_id], ((-1) * (offset), 0))
 
         # Apply effects
         column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)

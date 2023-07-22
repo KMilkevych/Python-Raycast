@@ -341,13 +341,17 @@ class Camera:
                     perpWallDist = (sideDistX - deltaDistX) * level.tile_size[0]
                     face = 0 if stepX == -1 else 1
                     
-                    offset = math.floor(self.position[1] + perpWallDist * rayDirection[1]) % level.tile_size[1]
+                    #offset = math.floor(self.position[1] + perpWallDist * rayDirection[1]) % level.tile_size[1]
+                    #offset = math.floor((self.position[1] + perpWallDist * rayDirection[1]) * (TEXTURE_SIZE[0] / level.tile_size[1]) ) % TEXTURE_SIZE[0]
+                    offset = (posY + (sideDistX - deltaDistX) * rayDirection[1]) * TEXTURE_SIZE[0] % TEXTURE_SIZE[0]
                 else:
                     perpWallDist = (sideDistY - deltaDistY) * level.tile_size[1]
                     face = 2 if stepY == -1 else 3
 
-                    offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
-                    
+                    #offset = math.floor(self.position[0] + perpWallDist * rayDirection[0]) % level.tile_size[0]
+                    #offset = math.floor((self.position[0] + perpWallDist * rayDirection[0])  * (TEXTURE_SIZE[0] / level.tile_size[0]) ) % TEXTURE_SIZE[0]
+                    offset = (posX + (sideDistY - deltaDistY) * rayDirection[0]) * TEXTURE_SIZE[0] % TEXTURE_SIZE[0]
+
 
         return (perpWallDist, (mapX, mapY), face, offset)
 
@@ -356,10 +360,3 @@ class Camera:
         height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
-    
-    '''
-     def column_height_from_distance(self, level, distance):
-        height = (level.tile_size[2] / distance) * DISTANCE_TO_PROJECTION_PLANE
-        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
-        return (height, offset)
-    '''
