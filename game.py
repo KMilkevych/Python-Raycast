@@ -4,15 +4,15 @@ from pygame.locals import *
 
 import numpy as np
 
-import camera
-
 from texture_helper import *
 
-from level import *
+from level import Level
+from camera import Camera
+from typing import Tuple, Callable
 
 class Game:
 
-    def __init__(self, window_size = (1280, 800), frame_size = (320, 400), framerate_limit = 60, level=None, camera=None):
+    def __init__(self, window_size: Tuple[int, int] = (1280, 800), frame_size: Tuple[int, int] = (320, 400), framerate_limit: int = 60, level: Level = None, camera: Camera = None):
 
         self.WINDOW_SIZE = window_size
         self.WORKING_SIZE = frame_size
@@ -32,47 +32,47 @@ class Game:
         self.while_key_pressed = {}
         self.on_mouse_move = []
 
-    def set_level(self, level):
+    def set_level(self, level: Level):
         self.level = level
 
-    def get_level(self):
+    def get_level(self) -> Level:
         return self.level
     
-    def set_camera(self, camera):
+    def set_camera(self, camera: Camera):
         self.camera = camera
     
-    def get_camera(self):
+    def get_camera(self) -> Camera:
         return self.camera
 
-    def bind_key_down(self, key, action):
+    def bind_key_down(self, key: int, action: Callable):
         self.on_key_down[key] = action
 
-    def bind_key_up(self, key, action):
+    def bind_key_up(self, key: int, action: Callable):
         self.on_key_up[key] = action
     
-    def bind_key_pressed(self, key, action):
+    def bind_key_pressed(self, key: int, action: Callable):
         self.while_key_pressed[key] = action
     
-    def bind_mouse_move(self, action):
+    def bind_mouse_move(self, action: Callable):
         self.on_mouse_move.append(action)
     
-    def get_mouse(self):
+    def get_mouse(self) -> bool:
         return self.mouse_grab
     
-    def set_mouse(self, mouse_grab):
+    def set_mouse(self, mouse_grab: bool):
         self.mouse_grab = mouse_grab
 
         pygame.mouse.set_visible(not(self.mouse_grab))
         pygame.event.set_grab(self.mouse_grab)
         pygame.mouse.set_pos(self.WINDOW_SIZE[0]/2, self.WINDOW_SIZE[1]/2)
         
-    def get_debug(self):
+    def get_debug(self) -> bool:
         return self.debug
     
-    def set_debug(self, debug):
+    def set_debug(self, debug: bool):
         self.debug = debug
     
-    def get_dt(self):
+    def get_dt(self) -> int:
         return self.dt
 
     def quit(self):
