@@ -17,66 +17,66 @@ class Game:
         self.WINDOW_SIZE = window_size
         self.WORKING_SIZE = frame_size
         self.FRAMERATE = framerate_limit
-        self.dt = 0
+        self.__dt = 0
 
-        self.level = level
-        self.camera = camera
+        self.__level = level
+        self.__camera = camera
 
-        self.mouse_grab = False
-        self.debug = False
+        self.__mouse_grab = False
+        self.__debug = False
 
-        self.running = True
+        self.__running = True
 
-        self.on_key_down = {}
-        self.on_key_up = {}
-        self.while_key_pressed = {}
-        self.on_mouse_move = []
+        self.__on_key_down = {}
+        self.__on_key_up = {}
+        self.__while_key_pressed = {}
+        self.__on_mouse_move = []
 
     def set_level(self, level: Level):
-        self.level = level
+        self.__level = level
 
     def get_level(self) -> Level:
-        return self.level
+        return self.__level
     
     def set_camera(self, camera: Camera):
-        self.camera = camera
+        self.__camera = camera
     
     def get_camera(self) -> Camera:
-        return self.camera
+        return self.__camera
 
     def bind_key_down(self, key: int, action: Callable):
-        self.on_key_down[key] = action
+        self.__on_key_down[key] = action
 
     def bind_key_up(self, key: int, action: Callable):
-        self.on_key_up[key] = action
+        self.__on_key_up[key] = action
     
     def bind_key_pressed(self, key: int, action: Callable):
-        self.while_key_pressed[key] = action
+        self.__while_key_pressed[key] = action
     
     def bind_mouse_move(self, action: Callable):
-        self.on_mouse_move.append(action)
+        self.__on_mouse_move.append(action)
     
     def get_mouse(self) -> bool:
-        return self.mouse_grab
+        return self.__mouse_grab
     
     def set_mouse(self, mouse_grab: bool):
-        self.mouse_grab = mouse_grab
+        self.__mouse_grab = mouse_grab
 
-        pygame.mouse.set_visible(not(self.mouse_grab))
-        pygame.event.set_grab(self.mouse_grab)
+        pygame.mouse.set_visible(not(self.__mouse_grab))
+        pygame.event.set_grab(self.__mouse_grab)
         pygame.mouse.set_pos(self.WINDOW_SIZE[0]/2, self.WINDOW_SIZE[1]/2)
         
     def get_debug(self) -> bool:
-        return self.debug
+        return self.__debug
     
     def set_debug(self, debug: bool):
-        self.debug = debug
+        self.__debug = debug
     
     def get_dt(self) -> int:
-        return self.dt
+        return self.__dt
 
     def quit(self):
-        self.running = False
+        self.__running = False
 
     def setup(self):
 
@@ -100,14 +100,14 @@ class Game:
         clock = pygame.time.Clock()
 
         # Start game loop
-        while (self.running):
+        while (self.__running):
 
             # Fetch events
             for event in pygame.event.get():
 
                 # Check if user has quit
                 if event.type == pygame.QUIT:
-                    self.running = False
+                    self.__running = False
 
                 # If its a resize event
                 if event.type == pygame.VIDEORESIZE:
@@ -117,30 +117,30 @@ class Game:
                 if event.type == pygame.KEYDOWN:
 
                     # If the key is bound, then execute it
-                    if event.key in self.on_key_down.keys():
-                        self.on_key_down[event.key]()
+                    if event.key in self.__on_key_down.keys():
+                        self.__on_key_down[event.key]()
                 
                 if event.type == pygame.KEYUP:
 
                     # If the key is bound, then execute it
-                    if event.key in self.on_key_up.keys():
-                        self.on_key_up[event.key]()
+                    if event.key in self.__on_key_up.keys():
+                        self.__on_key_up[event.key]()
 
             # Update position based on inputs   
             keys = pygame.key.get_pressed()
 
             # Iterate over each bound key
-            for key in self.while_key_pressed.keys():
+            for key in self.__while_key_pressed.keys():
                 
                 # If its pressed, do the action
                 if keys[key]:
-                    self.while_key_pressed[key]()
+                    self.__while_key_pressed[key]()
 
             
             # Update based on mouse movement
             mouse_xy = pygame.mouse.get_rel()
-            if self.mouse_grab:
-                for mouse_action in self.on_mouse_move:
+            if self.__mouse_grab:
+                for mouse_action in self.__on_mouse_move:
                     mouse_action(mouse_xy[0], mouse_xy[1])
 
             # Clear the screen
@@ -162,7 +162,7 @@ class Game:
 
             # Draw debug info
             # TODO: Make debug info
-            if self.debug:
+            if self.__debug:
                 pass
 
             # Paste self.screen frame
@@ -173,30 +173,30 @@ class Game:
             pygame.display.flip()
 
             # Limit fps
-            self.dt = clock.tick(self.FRAMERATE) / 1000
-            pygame.display.set_caption("Raycasting " + str(np.round(1. / self.dt, 1)))
+            self.__dt = clock.tick(self.FRAMERATE) / 1000
+            pygame.display.set_caption("Raycasting " + str(np.round(1. / self.__dt, 1)))
 
         # Quit application
         pygame.quit()
 
 
     def __draw_sky_and_ground(self):
-        middle = max(0, int(self.WORKING_SIZE[1]/2 + self.camera.tilt_offset))
-        pygame.draw.rect(self.screen, self.level.SKY_COLOR, pygame.Rect((0, 0), (self.WORKING_SIZE[0], middle)))
-        pygame.draw.rect(self.screen, self.level.GROUND_COLOR, pygame.Rect((0, middle), (self.WORKING_SIZE[0], self.WORKING_SIZE[1] - middle)))
+        middle = max(0, int(self.WORKING_SIZE[1]/2 + self.__camera.tilt_offset))
+        pygame.draw.rect(self.screen, self.__level.SKY_COLOR, pygame.Rect((0, 0), (self.WORKING_SIZE[0], middle)))
+        pygame.draw.rect(self.screen, self.__level.GROUND_COLOR, pygame.Rect((0, middle), (self.WORKING_SIZE[0], self.WORKING_SIZE[1] - middle)))
 
 
     def __draw_floors_and_ceilings(self):
 
         # Compute floorcast surface
-        floors_and_ceilings_surface = self.camera.do_floorcast_to_surface(self.level, self.textures)
+        floors_and_ceilings_surface = self.__camera.do_floorcast_to_surface(self.__level, self.textures)
         floors_and_ceilings_surface.set_colorkey((0, 0, 0))
 
         # Draw floorcast surface to screen
         self.screen.blit(floors_and_ceilings_surface, (0, 0))
     
     def __compute_raycast_data(self):
-        return self.camera.do_raycast(self.level)
+        return self.__camera.do_raycast(self.__level)
 
     def __draw_walls(self, raycast_data):
 
@@ -210,15 +210,15 @@ class Game:
             distance, (mapX, mapY), face, offset = raycast_data[col]
 
             # Extract wall data from walls
-            wall_tag, texture_id, wall_height = self.level.walls[mapY][mapX]
+            wall_tag, texture_id, wall_height = self.__level.walls[mapY][mapX]
 
             # Compute height of wall, and space/offset at top based on self.camera height
-            height, height_offset = self.camera.height_and_offset_from_distance(wall_height, distance)
+            height, height_offset = self.__camera.height_and_offset_from_distance(wall_height, distance)
 
             # Compute modifiers
             shade_factor = 1.0 - 0.2 * (face % 2)
 
-            intensify_factor = min(1.0, (self.camera.INTENSITY_MULTIPLIER * self.camera.INTENSITY_MULTIPLIER) / (distance * distance))
+            intensify_factor = min(1.0, (self.__camera.INTENSITY_MULTIPLIER * self.__camera.INTENSITY_MULTIPLIER) / (distance * distance))
             final_factor = min(shade_factor * intensify_factor * 255, 255)
 
             # Apply texture to column
@@ -228,10 +228,10 @@ class Game:
             column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
 
             # Blit column
-            self.screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + self.camera.tilt_offset))
+            self.screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + self.__camera.tilt_offset))
 
     def __compute_sprite_data(self):
-        return self.camera.compute_sprite_data(self.level)
+        return self.__camera.compute_sprite_data(self.__level)
 
     def __draw_sprites(self, sprite_data, raycast_data):
 
@@ -247,7 +247,7 @@ class Game:
             draw_end = (int(draw_start_x + sprite_size_x), int(draw_start_y + sprite_size_y))
 
             # Compute intensity
-            final_factor = min(1.0, (self.camera.INTENSITY_MULTIPLIER * self.camera.INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
+            final_factor = min(1.0, (self.__camera.INTENSITY_MULTIPLIER * self.__camera.INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
 
             # Compute surface to draw from
             sprite = pygame.transform.scale(self.sprite_textures[texture_id], sprite_size)

@@ -9,7 +9,7 @@ WINDOW_SIZE = (1280, 800)
 VIEW_SIZE = (320, 400)
 
 # Define helpers
-def bind_keys(game, camera):
+def bind_keys(game: Game, camera: Camera):
     # Create input map
     def player_move_forward():
         camera.move_collide(1., game.get_dt(), level)
