@@ -143,8 +143,8 @@ class Camera:
         sprite_heights = np.clip(sprite_heights, 0, 2*WORKING_SIZE[1])
         sprite_offsets += self.tilt_offset
 
-        # Compute sprite dimensions
-        sprite_sizes = np.hstack([sprite_heights, sprite_heights])
+        # Compute sprite dimensions. Reduce width by 2x to acommodate for 320x400 resolution which "fattens" sprites
+        sprite_sizes = np.hstack([sprite_heights/2, sprite_heights])
         
         # Compute draw_start and draw_end
         sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets])
@@ -193,9 +193,11 @@ class Camera:
         # Compute ray hits
         ray_hit_left = (left_ray * h_distances)
         np.add(ray_hit_left, self.position, ray_hit_left)
+        np.multiply(ray_hit_left, np.array([TEXTURE_SIZE[0] / level.tile_size[0], TEXTURE_SIZE[1] / level.tile_size[1]]), ray_hit_left)
 
         ray_hit_right = (right_ray * h_distances)
         np.add(ray_hit_right, self.position, ray_hit_right)
+        np.multiply(ray_hit_right, np.array([TEXTURE_SIZE[0] / level.tile_size[0], TEXTURE_SIZE[1] / level.tile_size[1]]), ray_hit_right)
 
         # Do linear interpolation for ray hits
         ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
@@ -209,7 +211,7 @@ class Camera:
         ceiling = np.array(level.ceilings)
 
         # Compute which cells on the floor we hit and get the right textures and clip to size
-        cells = (ray_hits / np.array([level.tile_size[0], level.tile_size[1]])).astype(int)
+        cells = (ray_hits / np.array([TEXTURE_SIZE[0], TEXTURE_SIZE[1]])).astype(int)
         np.clip(cells[:,:,0], 0, floor.shape[0]-1, cells[:,:,0])
         np.clip(cells[:,:,1], 0, floor.shape[1]-1, cells[:,:,1])        
 

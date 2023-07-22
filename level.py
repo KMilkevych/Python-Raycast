@@ -16,20 +16,20 @@ class Level:
 
         AIR = (0, 0, 0)
 
-        W_0 = (1, 1, 64)    # dark gray
+        W_0 = (1, 1, self.tile_size[2])    # dark gray
 
-        W_1 = (1, 8, 64)    # blue_stone
-        W_2 = (1, 9, 64)    # color_stone
-        W_3 = (1, 10, 64)   # grey_stone 
-        W_4 = (1, 11, 64)   # mossy_stone
-        W_5 = (1, 12, 64)   # purple_stone
-        W_6 = (1, 13, 64)   # red_brick
-        W_7 = (1, 14, 64)   # eagle_brick
-        W_8 = (1, 15, 64)   # wood
+        W_1 = (1, 8, self.tile_size[2])    # blue_stone
+        W_2 = (1, 9, self.tile_size[2])    # color_stone
+        W_3 = (1, 10, self.tile_size[2])   # grey_stone 
+        W_4 = (1, 11, self.tile_size[2])   # mossy_stone
+        W_5 = (1, 12, self.tile_size[2])   # purple_stone
+        W_6 = (1, 13, self.tile_size[2])   # red_brick
+        W_7 = (1, 14, self.tile_size[2])   # eagle_brick
+        W_8 = (1, 15, self.tile_size[2])   # wood
 
-        W_9 = (1, 5, 64)    # brick_texture_01
-        W10 = (1, 6, 64)    # brick_texture_02
-        W11 = (1, 7, 64)    # brick_texture_03
+        W_9 = (1, 5, self.tile_size[2])    # brick_texture_01
+        W10 = (1, 6, self.tile_size[2])    # brick_texture_02
+        W11 = (1, 7, self.tile_size[2])    # brick_texture_03
 
         self.walls = np.array([
             # 00   01   02   03   04   05   06   07   08   09   10   11   12   13   14   15
@@ -112,9 +112,9 @@ class Level:
         ])
 
         # Each sprite is defined by a sprite object (tag/type, texture, height/z-pos) and a position in the game world (x, y)
-        BARREL = [1, 0, 64]
-        PILLAR = [1, 1, 64]
-        LAMP = [0, 2, 96]
+        BARREL = [1, 0, self.tile_size[2]]
+        PILLAR = [1, 1, self.tile_size[2]]
+        LAMP = [0, 2, self.ceiling_height]
 
         self.sprites = np.array([
             [*BARREL, 2.5, 8.5],
