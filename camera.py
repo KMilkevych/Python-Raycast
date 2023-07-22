@@ -8,14 +8,18 @@ import numpy as np
 
 import math
 
-from texture_helper import *
+from level import Level
 
-def compute_direction(angle):
+from texture_helper import TEXTURE_SIZE
+
+from typing import Tuple
+
+def compute_direction(angle: float) -> np.ndarray:
     return np.array([np.math.cos(angle), np.math.sin(angle)])
 
 class Camera:
 
-    def __init__(self, position, angle, view_width, view_height):
+    def __init__(self, position: np.ndarray, angle: float, view_width: int, view_height: int):
 
         self.height = 32.
         
@@ -39,7 +43,7 @@ class Camera:
         self.INTENSITY = 6.0
         self.INTENSITY_MULTIPLIER = 32 * self.INTENSITY
     
-    def turn(self, direction, deltaTime):
+    def turn(self, direction: float, deltaTime: float):
 
         # Change angle
         self.angle += direction * deltaTime * self.turn_speed
@@ -47,7 +51,7 @@ class Camera:
         # Recompute direction
         self.direction = compute_direction(self.angle)
     
-    def tilt(self, direction, deltaTime):
+    def tilt(self, direction: float, deltaTime: float):
 
         # Change vangle
         self.vangle += direction * deltaTime * self.tilt_speed
@@ -56,17 +60,17 @@ class Camera:
         # Update tilt offset
         self.tilt_offset = (np.tan(self.vangle) * self.DISTANCE_TO_PROJECTION_PLANE).astype(int)
     
-    def move(self, direction, deltaTime):
+    def move(self, direction: float, deltaTime: float):
 
         # Change position
         self.position += direction * self.direction * self.speed * deltaTime
     
-    def strafe(self, direction, deltaTime):
+    def strafe(self, direction: float, deltaTime: float):
 
         # Change position
         self.position += direction * np.array([-self.direction[1], self.direction[0]]) * self.speed * deltaTime
     
-    def strafe_collide(self, direction, deltaTime, level):
+    def strafe_collide(self, direction: float, deltaTime: float, level: Level):
 
         # Define wall margin
         margin = 2
@@ -97,7 +101,7 @@ class Camera:
         # Update own position
         self.position = new_pos
     
-    def move_collide(self, direction, deltaTime, level):
+    def move_collide(self, direction: float, deltaTime: float, level: Level):
 
         # Define wall margin
         margin = 2
@@ -128,10 +132,10 @@ class Camera:
         # Update own position
         self.position = new_pos
     
-    def compute_sprite_data(self, level):
+    def compute_sprite_data(self, level: Level) -> np.ndarray:
 
         # Sprite positions relative to camera
-        sprite_positions = level.sprites[:, [3, 4]]
+        sprite_positions = level.static_objects[:, [3, 4]]
         sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
 
         # Camera plane
@@ -149,7 +153,7 @@ class Camera:
         sprite_screen_xs = ((self.view_width/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
-        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.sprites[:, [2]], sprite_distances[:])
+        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.static_objects[:, [2]], sprite_distances[:])
         sprite_heights = np.clip(sprite_heights, 0, 2*self.view_height)
         sprite_offsets += self.tilt_offset
 
@@ -161,7 +165,7 @@ class Camera:
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
         # Build sprite data: (height, distance, size, draw_start)
-        sprite_data = np.hstack([level.sprites[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
+        sprite_data = np.hstack([level.static_objects[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
 
         # Remove inappropriate sprite data using row mask
         rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < self.view_width) & (sprite_positions[:, 1] > 0)
@@ -173,7 +177,7 @@ class Camera:
         # return sprite data
         return sprite_data
 
-    def do_floorcast_to_surface(self, level, textures):
+    def do_floorcast_to_surface(self, level: Level, textures) -> pygame.Surface:
 
         # Load textures as numpy array
         tile_textures = np.array(list(map(surfarray.array2d, textures)))
@@ -272,8 +276,8 @@ class Camera:
 
         # Return surface
         return surface
-           
-    def do_raycast(self, level):
+    
+    def do_raycast(self, level: Level) -> list:
 
         # For each column / working x cast a ray using dda
         distances = [0 for col in range(self.view_width)]
@@ -291,7 +295,7 @@ class Camera:
         # Return distances
         return distances
     
-    def do_dda(self, level, rayDirection):
+    def do_dda(self, level: Level, rayDirection: np.ndarray) -> Tuple[float, Tuple[int, int], int, int]:
 
         posX = self.position[0] / level.tile_size[0]
         posY = self.position[1] / level.tile_size[1]
@@ -366,7 +370,7 @@ class Camera:
 
         return (perpWallDist, (mapX, mapY), face, offset)
 
-    def height_and_offset_from_distance(self, true_height, distance):
+    def height_and_offset_from_distance(self, true_height: float, distance: float) -> Tuple[float, float]:
         height = (true_height / distance) * self.DISTANCE_TO_PROJECTION_PLANE
         offset =  self.view_height/2 - height + ((self.height / distance) * self.DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)

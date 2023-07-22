@@ -1,6 +1,6 @@
 import pygame
 
-TEXTURE_SIZE = (32, 32)
+TEXTURE_SIZE = (64, 64)
 
 def load_sprite_textures():
     barrel_texture = load_texture("textures/wolfenstein_textures/barrel.png")

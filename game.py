@@ -4,7 +4,7 @@ from pygame.locals import *
 
 import numpy as np
 
-from texture_helper import *
+from texture_helper import load_textures, load_sprite_textures, TEXTURE_SIZE
 
 from level import Level
 from camera import Camera
@@ -12,25 +12,53 @@ from typing import Tuple, Callable
 
 class Game:
 
-    def __init__(self, window_size: Tuple[int, int] = (1280, 800), frame_size: Tuple[int, int] = (320, 400), framerate_limit: int = 60, level: Level = None, camera: Camera = None):
+    def __init__(
+                self,
+                window_size: Tuple[int, int] = (1280, 800),
+                frame_size: Tuple[int, int] = (320, 400),
+                framerate_limit: int = 60,
+                level: Level = None,
+                camera: Camera = None
+            ):
 
-        self.WINDOW_SIZE = window_size
-        self.WORKING_SIZE = frame_size
-        self.FRAMERATE = framerate_limit
+        # Setup window-related members
+        self.__window_size = window_size
+        self.__frame_size = frame_size
+        self.__framerate = framerate_limit
         self.__dt = 0
 
+        # Initialize pygame window
+        pygame.init()
+        self.window = pygame.display.set_mode(self.__window_size, flags=DOUBLEBUF | RESIZABLE, depth=16, vsync=True)
+        self.screen = pygame.Surface(self.__frame_size)
+
+        # Set level and camera objects
         self.__level = level
         self.__camera = camera
 
-        self.__mouse_grab = False
-        self.__debug = False
-
+        # Initialize without mouse and debug enabled
+        self.__mouse_enabled = False
+        self.__debug_enabled = False
+        
+        # Start game as running
         self.__running = True
 
+        # Initialize empty keymaps
         self.__on_key_down = {}
         self.__on_key_up = {}
         self.__while_key_pressed = {}
         self.__on_mouse_move = []
+
+        # Custom objects / variables dictionary
+        self.custom_variables = {}
+
+        # Instantiate font for text writing
+        pygame.font.init()
+        self.main_font = pygame.font.SysFont("Dejavu Sans", 16)
+
+        # Load textures
+        self.textures = load_textures()
+        self.sprite_textures = load_sprite_textures()
 
     def set_level(self, level: Level):
         self.__level = level
@@ -56,43 +84,42 @@ class Game:
     def bind_mouse_move(self, action: Callable):
         self.__on_mouse_move.append(action)
     
-    def get_mouse(self) -> bool:
-        return self.__mouse_grab
+    def get_mouse_enabled(self) -> bool:
+        return self.__mouse_enabled
     
-    def set_mouse(self, mouse_grab: bool):
-        self.__mouse_grab = mouse_grab
+    def set_mouse_enabled(self, mouse_enabled: bool):
+        self.__mouse_enabled = mouse_enabled
 
-        pygame.mouse.set_visible(not(self.__mouse_grab))
-        pygame.event.set_grab(self.__mouse_grab)
-        pygame.mouse.set_pos(self.WINDOW_SIZE[0]/2, self.WINDOW_SIZE[1]/2)
+        pygame.mouse.set_visible(not(self.__mouse_enabled))
+        pygame.event.set_grab(self.__mouse_enabled)
+        pygame.mouse.set_pos(self.__window_size[0]/2, self.__window_size[1]/2)
         
-    def get_debug(self) -> bool:
-        return self.__debug
+    def get_debug_enabled(self) -> bool:
+        return self.__debug_enabled
     
-    def set_debug(self, debug: bool):
-        self.__debug = debug
+    def set_debug_enabled(self, debug_enabled: bool):
+        self.__debug_enabled = debug_enabled
     
     def get_dt(self) -> int:
         return self.__dt
 
+    def get_frame_size(self) -> Tuple[int, int]:
+        return self.__frame_size
+        
     def quit(self):
         self.__running = False
 
-    def setup(self):
+    def get_custom_variable(self, key):
+        return self.custom_variables[key]
+    
+    def set_custom_variable(self, key, value):
+        self.custom_variables[key] = value
+    
+    def get_custom_variables(self) -> dict:
+        return self.custom_variables
 
-        # Instantiate font
-        pygame.font.init()
-        self.main_font = pygame.font.SysFont("Dejavu Sans", 16)
-
-        # Initialize pygame window
-        pygame.init()
-        self.window = pygame.display.set_mode(self.WINDOW_SIZE, flags=DOUBLEBUF | RESIZABLE, depth=16, vsync=True)
-        self.screen = pygame.Surface(self.WORKING_SIZE)
-
-        # Load textures
-        self.textures = load_textures()
-        self.sprite_textures = load_sprite_textures()
-
+    def set_custom_variables(self, custom_variables: dict):
+        self.custom_variables = custom_variables
 
     def run(self):
 
@@ -111,7 +138,7 @@ class Game:
 
                 # If its a resize event
                 if event.type == pygame.VIDEORESIZE:
-                    self.WINDOW_SIZE = event.dict['size']
+                    self.__window_size = event.dict['size']
 
                 # Keypress events
                 if event.type == pygame.KEYDOWN:
@@ -139,7 +166,7 @@ class Game:
             
             # Update based on mouse movement
             mouse_xy = pygame.mouse.get_rel()
-            if self.__mouse_grab:
+            if self.__mouse_enabled:
                 for mouse_action in self.__on_mouse_move:
                     mouse_action(mouse_xy[0], mouse_xy[1])
 
@@ -162,18 +189,18 @@ class Game:
 
             # Draw debug info
             # TODO: Make debug info
-            if self.__debug:
+            if self.__debug_enabled:
                 pass
 
             # Paste self.screen frame
-            frame = pygame.transform.scale(self.screen, self.WINDOW_SIZE)
+            frame = pygame.transform.scale(self.screen, self.__window_size)
             self.window.blit(frame, frame.get_rect())
 
             # Update display
             pygame.display.flip()
 
             # Limit fps
-            self.__dt = clock.tick(self.FRAMERATE) / 1000
+            self.__dt = clock.tick(self.__framerate) / 1000
             pygame.display.set_caption("Raycasting " + str(np.round(1. / self.__dt, 1)))
 
         # Quit application
@@ -181,9 +208,9 @@ class Game:
 
 
     def __draw_sky_and_ground(self):
-        middle = max(0, int(self.WORKING_SIZE[1]/2 + self.__camera.tilt_offset))
-        pygame.draw.rect(self.screen, self.__level.SKY_COLOR, pygame.Rect((0, 0), (self.WORKING_SIZE[0], middle)))
-        pygame.draw.rect(self.screen, self.__level.GROUND_COLOR, pygame.Rect((0, middle), (self.WORKING_SIZE[0], self.WORKING_SIZE[1] - middle)))
+        middle = max(0, int(self.__frame_size[1]/2 + self.__camera.tilt_offset))
+        pygame.draw.rect(self.screen, self.__level.sky_color, pygame.Rect((0, 0), (self.__frame_size[0], middle)))
+        pygame.draw.rect(self.screen, self.__level.ground_color, pygame.Rect((0, middle), (self.__frame_size[0], self.__frame_size[1] - middle)))
 
 
     def __draw_floors_and_ceilings(self):
@@ -204,7 +231,7 @@ class Game:
         column = pygame.Surface((1, TEXTURE_SIZE[1]))
 
         # Draw columns to screen
-        for col in range(self.WORKING_SIZE[0]):
+        for col in range(self.__frame_size[0]):
 
             # Extract data from dda
             distance, (mapX, mapY), face, offset = raycast_data[col]
@@ -259,7 +286,7 @@ class Game:
 
             # Iterate and blit each column of the sprite
             for col in range(draw_start[0], draw_end[0]):
-                if col > 0 and col < self.WORKING_SIZE[0] and sprite_distance < raycast_data[col][0]:
+                if col > 0 and col < self.__frame_size[0] and sprite_distance < raycast_data[col][0]:
                     
                     # Blit to column
                     column.blit(sprite, (-(col - draw_start[0]), 0))
