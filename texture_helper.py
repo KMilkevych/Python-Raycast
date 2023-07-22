@@ -77,9 +77,3 @@ def load_textures():
 def load_texture(filename):
     tex = pygame.image.load(filename).convert()
     return pygame.transform.scale(tex, TEXTURE_SIZE)
-
-'''
-def load_sprite(filename):
-    tex = pygame.image.load(filename).convert()
-    return pygame.transform.scale(tex, (TEXTURE_SIZE[0]*2, TEXTURE_SIZE[1]*2))
-'''

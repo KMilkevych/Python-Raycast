@@ -7,8 +7,10 @@ class Level:
         self.tile_size = np.array([32, 32, 64])
         self.ceiling_height = 96
 
-        self.player_start = (2.5, 13.5, np.pi + np.pi/2)
-        #self.player_start_dir = (np.pi/2)
+        self.player_start = (2.5 * self.tile_size[0], 13.5 * self.tile_size[1], np.pi + np.pi/2)
+        
+        self.GROUND_COLOR = (60, 20, 0)
+        self.SKY_COLOR = (160, 230, 230)
 
         # Each wall is defined by a tag / wall type, a texture and height
         # type 0 == empty space / not wall

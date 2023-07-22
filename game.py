@@ -4,7 +4,6 @@ from pygame.locals import *
 
 import numpy as np
 
-from constants import *
 import camera
 
 from texture_helper import *
@@ -162,9 +161,9 @@ class Game:
             self.__draw_sprites(sprite_data, raycast_data)
 
             # Draw debug info
+            # TODO: Make debug info
             if self.debug:
                 pass
-                #self.__draw_debug()
 
             # Paste self.screen frame
             frame = pygame.transform.scale(self.screen, self.WINDOW_SIZE)
@@ -183,8 +182,8 @@ class Game:
 
     def __draw_sky_and_ground(self):
         middle = max(0, int(self.WORKING_SIZE[1]/2 + self.camera.tilt_offset))
-        pygame.draw.rect(self.screen, SKY_COLOR, pygame.Rect((0, 0), (self.WORKING_SIZE[0], middle)))
-        pygame.draw.rect(self.screen, GROUND_COLOR, pygame.Rect((0, middle), (self.WORKING_SIZE[0], self.WORKING_SIZE[1] - middle)))
+        pygame.draw.rect(self.screen, self.level.SKY_COLOR, pygame.Rect((0, 0), (self.WORKING_SIZE[0], middle)))
+        pygame.draw.rect(self.screen, self.level.GROUND_COLOR, pygame.Rect((0, middle), (self.WORKING_SIZE[0], self.WORKING_SIZE[1] - middle)))
 
 
     def __draw_floors_and_ceilings(self):
@@ -219,7 +218,7 @@ class Game:
             # Compute modifiers
             shade_factor = 1.0 - 0.2 * (face % 2)
 
-            intensify_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (distance * distance))
+            intensify_factor = min(1.0, (self.camera.INTENSITY_MULTIPLIER * self.camera.INTENSITY_MULTIPLIER) / (distance * distance))
             final_factor = min(shade_factor * intensify_factor * 255, 255)
 
             # Apply texture to column
@@ -248,7 +247,7 @@ class Game:
             draw_end = (int(draw_start_x + sprite_size_x), int(draw_start_y + sprite_size_y))
 
             # Compute intensity
-            final_factor = min(1.0, (INTENSITY_MULTIPLIER * INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
+            final_factor = min(1.0, (self.camera.INTENSITY_MULTIPLIER * self.camera.INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
 
             # Compute surface to draw from
             sprite = pygame.transform.scale(self.sprite_textures[texture_id], sprite_size)
@@ -260,7 +259,7 @@ class Game:
 
             # Iterate and blit each column of the sprite
             for col in range(draw_start[0], draw_end[0]):
-                if col > 0 and col < WORKING_SIZE[0] and sprite_distance < raycast_data[col][0]:
+                if col > 0 and col < self.WORKING_SIZE[0] and sprite_distance < raycast_data[col][0]:
                     
                     # Blit to column
                     column.blit(sprite, (-(col - draw_start[0]), 0))

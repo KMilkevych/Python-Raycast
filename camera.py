@@ -5,7 +5,6 @@ import pygame
 import pygame.surfarray as surfarray
 
 import numpy as np
-from constants import *
 
 import math
 
@@ -16,18 +15,29 @@ def compute_direction(angle):
 
 class Camera:
 
-    def __init__(self, position, angle):
+    def __init__(self, position, angle, view_width, view_height):
+
         self.height = 32.
-        self.fov = PLAYER_FOV
-        self.speed = PLAYER_SPEED
-        self.turn_speed = PLAYER_TURN_SPEED
-        self.tilt_speed = PLAYER_TILT_SPEED
+        
+        self.fov = np.math.pi / 2
+        self.view_width = view_width
+        self.view_height = view_height
+        self.DISTANCE_TO_PROJECTION_PLANE = (self.view_width / 2) / np.math.tan(self.fov / 2)
+
+        self.speed = 32
+        self.turn_speed = 2
+        self.tilt_speed = 2
+
+        #self.COLUMN_WIDTH = PLAYER_FOV / WORKING_SIZE[0]
 
         self.position = np.array([position[0], position[1]])
         self.angle = angle
         self.vangle = 0.
         self.tilt_offset = 0
         self.direction = compute_direction(self.angle)
+
+        self.INTENSITY = 6.0
+        self.INTENSITY_MULTIPLIER = 32 * self.INTENSITY
     
     def turn(self, direction, deltaTime):
 
@@ -44,7 +54,7 @@ class Camera:
         self.vangle = np.clip(self.vangle, -np.pi/2.5, np.pi/2.5)
 
         # Update tilt offset
-        self.tilt_offset = (np.tan(self.vangle) * DISTANCE_TO_PROJECTION_PLANE).astype(int)
+        self.tilt_offset = (np.tan(self.vangle) * self.DISTANCE_TO_PROJECTION_PLANE).astype(int)
     
     def move(self, direction, deltaTime):
 
@@ -125,7 +135,7 @@ class Camera:
         sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
 
         # Camera plane
-        camera_plane_length = np.math.tan(PLAYER_FOV / 2)
+        camera_plane_length = np.math.tan(self.fov / 2)
         camera_plane = np.array([-self.direction[1], self.direction[0]])[:, np.newaxis]
         camera_plane = (camera_plane) * camera_plane_length
 
@@ -136,11 +146,11 @@ class Camera:
         sprite_distances = sprite_positions[:, [1]] * level.tile_size[0]
 
         # Compute horisontal offsets when drawing sprites on screen
-        sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
+        sprite_screen_xs = ((self.view_width/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
         sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.sprites[:, [2]], sprite_distances[:])
-        sprite_heights = np.clip(sprite_heights, 0, 2*WORKING_SIZE[1])
+        sprite_heights = np.clip(sprite_heights, 0, 2*self.view_height)
         sprite_offsets += self.tilt_offset
 
         # Compute sprite dimensions. Reduce width by 2x to acommodate for 320x400 resolution which "fattens" sprites
@@ -154,7 +164,7 @@ class Camera:
         sprite_data = np.hstack([level.sprites[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
 
         # Remove inappropriate sprite data using row mask
-        rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < WORKING_SIZE[0]) & (sprite_positions[:, 1] > 0)
+        rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < self.view_width) & (sprite_positions[:, 1] > 0)
         sprite_data = sprite_data[rows_mask, :]
 
         # Lastly, sort by distance
@@ -169,26 +179,26 @@ class Camera:
         tile_textures = np.array(list(map(surfarray.array2d, textures)))
         
         # Create a surface
-        surface = pygame.Surface(WORKING_SIZE)
+        surface = pygame.Surface((self.view_width, self.view_height))
         surface_array = surfarray.pixels2d(surface)
 
         # Compute angle mod
-        angle_mod = np.math.atan2((WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE)
+        angle_mod = np.math.atan2((self.view_width / 2), self.DISTANCE_TO_PROJECTION_PLANE)
 
         # Compute the left-most ray and right-most ray
         left_ray = compute_direction(self.angle - angle_mod)
         right_ray = compute_direction(self.angle + angle_mod)
 
         # Generate rows
-        middle = max(0, int(WORKING_SIZE[1]/2 + self.tilt_offset))
-        look_offsets = (np.arange(WORKING_SIZE[1]) - WORKING_SIZE[1]/2)[:, np.newaxis]
+        middle = max(0, int(self.view_height/2 + self.tilt_offset))
+        look_offsets = (np.arange(self.view_height) - self.view_height/2)[:, np.newaxis]
         np.subtract(look_offsets, self.tilt_offset, look_offsets) # Apply look_offsets
         
 
         # Compute h_distances
         h_distances = np.empty_like(look_offsets)
-        h_distances[:middle, 0] = (level.ceiling_height - self.height) * DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
-        h_distances[middle+1:, 0] = (self.height) * DISTANCE_TO_PROJECTION_PLANE / (look_offsets[middle+1:,0] * np.math.cos(angle_mod))
+        h_distances[:middle, 0] = (level.ceiling_height - self.height) * self.DISTANCE_TO_PROJECTION_PLANE / (-look_offsets[:middle,0] * np.math.cos(angle_mod))
+        h_distances[middle+1:, 0] = (self.height) * self.DISTANCE_TO_PROJECTION_PLANE / (look_offsets[middle+1:,0] * np.math.cos(angle_mod))
 
         # Compute ray hits
         ray_hit_left = (left_ray * h_distances)
@@ -200,8 +210,8 @@ class Camera:
         np.multiply(ray_hit_right, np.array([TEXTURE_SIZE[0] / level.tile_size[0], TEXTURE_SIZE[1] / level.tile_size[1]]), ray_hit_right)
 
         # Do linear interpolation for ray hits
-        ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], WORKING_SIZE[0], axis=1)
-        ray_hits_y = np.linspace(ray_hit_left[:, 1], ray_hit_right[:, 1], WORKING_SIZE[0], axis=1)
+        ray_hits_x = np.linspace(ray_hit_left[:, 0], ray_hit_right[:, 0], self.view_width, axis=1)
+        ray_hits_y = np.linspace(ray_hit_left[:, 1], ray_hit_right[:, 1], self.view_width, axis=1)
 
         # Merge into x, y coordinate pairs for each row, column
         ray_hits = np.dstack([ray_hits_x, ray_hits_y]) # row, column, (x, y)
@@ -216,7 +226,7 @@ class Camera:
         np.clip(cells[:,:,1], 0, floor.shape[1]-1, cells[:,:,1])        
 
         # Compute which texture ids the cells hit by rays correspond to
-        cell_texture_ids = np.empty((WORKING_SIZE[1], WORKING_SIZE[0])).astype(int)
+        cell_texture_ids = np.empty((self.view_height, self.view_width)).astype(int)
         cell_texture_ids[:middle] = ceiling[cells[:middle,:,1], cells[:middle,:,0]]
         cell_texture_ids[middle:] = floor[cells[middle:,:,1], cells[middle:,:,0]]
 
@@ -236,17 +246,17 @@ class Camera:
         del surface_array
 
         # Create a blend surface
-        blend_surface = pygame.Surface(WORKING_SIZE)
+        blend_surface = pygame.Surface((self.view_width, self.view_height))
 
         # Compute intensities distances from h_distances
         intensities = np.empty_like(h_distances)
 
         np.square(h_distances, h_distances)
-        np.divide(INTENSITY_MULTIPLIER*INTENSITY_MULTIPLIER, h_distances, intensities)
+        np.divide(self.INTENSITY_MULTIPLIER*self.INTENSITY_MULTIPLIER, h_distances, intensities)
         np.clip(intensities, 0.0, 1.0, intensities)
         np.multiply(intensities, 255.0, intensities)
 
-        intensities = np.tile(intensities, (1, WORKING_SIZE[0])).T
+        intensities = np.tile(intensities, (1, self.view_width)).T
 
         # Create a blend surface array
         blend_surface_array = surfarray.pixels3d(blend_surface)
@@ -262,17 +272,16 @@ class Camera:
 
         # Return surface
         return surface
-        
-        
+           
     def do_raycast(self, level):
 
         # For each column / working x cast a ray using dda
-        distances = [0 for col in range(WORKING_SIZE[0])]
+        distances = [0 for col in range(self.view_width)]
 
         # Perform dda for each ray
-        for col in range(WORKING_SIZE[0]):
+        for col in range(self.view_width):
             
-            angle_mod =  np.math.atan2((col - WORKING_SIZE[0] / 2), DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
+            angle_mod =  np.math.atan2((col - self.view_width / 2), self.DISTANCE_TO_PROJECTION_PLANE) # Slower but no curved edges
 
             rayDirection = compute_direction(self.angle + angle_mod)
 
@@ -357,8 +366,7 @@ class Camera:
 
         return (perpWallDist, (mapX, mapY), face, offset)
 
-   
     def height_and_offset_from_distance(self, true_height, distance):
-        height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
-        offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
+        height = (true_height / distance) * self.DISTANCE_TO_PROJECTION_PLANE
+        offset =  self.view_height/2 - height + ((self.height / distance) * self.DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
