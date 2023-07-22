@@ -120,16 +120,8 @@ class Camera:
     
     def compute_sprite_data(self, level):
 
-        # Compute sprite distances
-        sprite_distances = np.linalg.norm(level.sprites[:, [3, 4]] * np.array([level.tile_size[0], level.tile_size[1]]) - self.position, axis=1)[:, np.newaxis]
-        sprites_with_distances = np.hstack([level.sprites, sprite_distances])
-
-        # Sort by distance
-        sprites_with_distances = np.flip(sprites_with_distances[sprites_with_distances[:, 5].argsort()], axis=0)
-
-
         # Sprite positions relative to camera
-        sprite_positions = np.array(sprites_with_distances)[:, [3, 4]].astype(float)
+        sprite_positions = level.sprites[:, [3, 4]]
         sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
 
         # Camera plane
@@ -147,24 +139,26 @@ class Camera:
         sprite_screen_xs = ((WORKING_SIZE[0]/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
-        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(sprites_with_distances[:, [2]], sprite_distances[:])
+        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.sprites[:, [2]], sprite_distances[:])
         sprite_heights = np.clip(sprite_heights, 0, 2*WORKING_SIZE[1])
         sprite_offsets += self.tilt_offset
 
         # Compute sprite dimensions
         sprite_sizes = np.hstack([sprite_heights, sprite_heights])
-
         
         # Compute draw_start and draw_end
         sprite_draw_start = np.hstack([sprite_screen_xs - (sprite_sizes[:, [0]]/2), sprite_offsets])
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
-        # Build sprite data
-        sprite_data = np.hstack([sprites_with_distances[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
+        # Build sprite data: (height, distance, size, draw_start)
+        sprite_data = np.hstack([level.sprites[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
 
         # Remove inappropriate sprite data using row mask
         rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < WORKING_SIZE[0]) & (sprite_positions[:, 1] > 0)
         sprite_data = sprite_data[rows_mask, :]
+
+        # Lastly, sort by distance
+        sprite_data = np.flip(sprite_data[sprite_data[:, 1].argsort()], axis=0)
 
         # return sprite data
         return sprite_data
@@ -361,12 +355,6 @@ class Camera:
     def height_and_offset_from_distance(self, true_height, distance):
         height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
         offset =  WORKING_SIZE[1]/2 - height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
-        return (height, offset)
-    
-    def height_and_offset_with_alignment(self, true_height, distance, v_offset):
-        height = (true_height / distance) * DISTANCE_TO_PROJECTION_PLANE
-        v_height = ((true_height + v_offset) / distance) * DISTANCE_TO_PROJECTION_PLANE
-        offset =  WORKING_SIZE[1]/2 - v_height + ((self.height / distance) * DISTANCE_TO_PROJECTION_PLANE)
         return (height, offset)
     
     '''
