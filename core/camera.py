@@ -8,9 +8,9 @@ import numpy as np
 
 import math
 
-from level import Level
+from core.level import Level
 
-from texture_helper import TEXTURE_SIZE
+from core.texture_helper import TEXTURE_SIZE
 
 from typing import Tuple
 
@@ -135,7 +135,7 @@ class Camera:
     def compute_sprite_data(self, level: Level) -> np.ndarray:
 
         # Sprite positions relative to camera
-        sprite_positions = level.static_objects[:, [3, 4]]
+        sprite_positions = level.get_static_objects()[:, [3, 4]]
         sprite_positions -= (self.position / np.array([level.tile_size[0], level.tile_size[1]]))[:, np.newaxis].T
 
         # Camera plane
@@ -153,7 +153,7 @@ class Camera:
         sprite_screen_xs = ((self.view_width/2) * (1 + sprite_positions[:, [0]] / sprite_positions[:, [1]])).astype(int)
 
         # Compute vertical offset when drawing sprite based on sprites desired height/z-pos, player height, player tilt and distance
-        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.static_objects[:, [2]], sprite_distances[:])
+        sprite_heights, sprite_offsets = self.height_and_offset_from_distance(level.get_static_objects()[:, [2]], sprite_distances[:])
         sprite_heights = np.clip(sprite_heights, 0, 2*self.view_height)
         sprite_offsets += self.tilt_offset
 
@@ -165,7 +165,7 @@ class Camera:
         sprite_draw_end = sprite_draw_start + sprite_sizes
 
         # Build sprite data: (height, distance, size, draw_start)
-        sprite_data = np.hstack([level.static_objects[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
+        sprite_data = np.hstack([level.get_static_objects()[:, [1]], sprite_distances[:], sprite_sizes, sprite_draw_start])
 
         # Remove inappropriate sprite data using row mask
         rows_mask = (sprite_draw_end[:, 0] > 0) & (sprite_draw_start[:, 0] < self.view_width) & (sprite_positions[:, 1] > 0)

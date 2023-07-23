@@ -1,6 +1,8 @@
-from game import Game
-from level import Level, level0
-from camera import Camera
+from core.game import Game
+#from core.level import Level
+from core.camera import Camera
+
+from levels import Level0
 
 import pygame
 
@@ -76,9 +78,8 @@ def bind_keys(game: Game, camera: Camera):
     game.bind_key_down(pygame.K_x, game_toggle_debug_info)
     game.bind_key_down(pygame.K_ESCAPE, game_quit)
 
-# Create a level
-#level = Level()
-level = level0
+# Load a level from the levels folder
+level = Level0()
 
 # Create a camera
 camera = Camera(position=level.player_start, angle=level.player_start_angle, view_width=VIEW_SIZE[0], view_height=VIEW_SIZE[1])

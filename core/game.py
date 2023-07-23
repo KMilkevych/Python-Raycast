@@ -4,10 +4,10 @@ from pygame.locals import *
 
 import numpy as np
 
-from texture_helper import load_textures, load_sprite_textures, TEXTURE_SIZE
+from core.texture_helper import load_textures, load_sprite_textures, TEXTURE_SIZE
 
-from level import Level
-from camera import Camera
+from core.level import Level
+from core.camera import Camera
 from typing import Tuple, Callable
 
 class Game:
