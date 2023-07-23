@@ -24,10 +24,8 @@ class Level:
         
         self.ground_color = ground_color
         self.sky_color = sky_color
-
-        # TODO: Make this useful
+        
         # Walls registered
-        self.walls = []
         self.__walls = np.array([])
 
         # Floors and ceilings registered
@@ -116,8 +114,3 @@ class Level:
 
         # Set numpy array
         self.__static_drawables_list = np.array(mapped_static_drawables)
-
-
-
-# TODO: Create a system similar to the static objects, where user can provide instances of a Wall class,
-# and they will then be converted to a numpy array for internal use

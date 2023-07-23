@@ -76,8 +76,6 @@ def bind_keys(game: Game, camera: Camera):
     def game_toggle_debug_info():
         game.set_debug_enabled(not(game.get_debug_enabled()))
 
-        move_magic_lamp()
-
     def game_quit():
         game.quit()
 
@@ -102,6 +100,8 @@ bind_keys(game, camera)
 
 # Define update function for game
 def update(game: Game, dt: float):
+
+    # Do nothing for now
     pass
 
 game.set_update(update)
@@ -120,6 +120,9 @@ def move_magic_lamp():
 
         if game.get_level().get_walls()[int(magic_lamp.y_pos - 0.5), int(magic_lamp.x_pos - 0.5), 0] == 0:
             break
+
+# Bind key to move magic lamp
+game.bind_key_down(pygame.K_x, move_magic_lamp)
 
 # Run game loop
 game.run()
