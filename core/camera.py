@@ -4,6 +4,8 @@
 import pygame
 import pygame.surfarray as surfarray
 
+from pygame.locals import *
+
 import numpy as np
 
 import math
@@ -277,6 +279,99 @@ class Camera:
         # Return surface
         return surface
     
+    def do_wallcast_to_surface(self, level: Level, raycast_data, textures) -> pygame.Surface:
+
+        # Create a surface
+        surface = pygame.Surface((self.view_width, self.view_height))
+
+        # Create pygame surface for a line
+        column = pygame.Surface((1, TEXTURE_SIZE[1]))
+
+        # Draw columns to screen
+        for col in range(self.view_width):
+
+            # Extract data from dda
+            distance, (mapX, mapY), face, offset = raycast_data[col]
+
+            # Extract wall data from walls
+            wall_tag, texture_id, wall_height = level.walls[mapY][mapX]
+
+            # Compute height of wall, and space/offset at top based on self.camera height
+            height, height_offset = self.height_and_offset_from_distance(wall_height, distance)
+
+            # Compute modifiers
+            shade_factor = 1.0 - 0.2 * (face % 2)
+
+            intensify_factor = min(1.0, (self.INTENSITY_MULTIPLIER * self.INTENSITY_MULTIPLIER) / (distance * distance))
+            final_factor = min(shade_factor * intensify_factor * 255, 255)
+
+            # Apply texture to column
+            column.blit(textures[texture_id], ((-1) * (offset), 0))
+
+            # Apply effects
+            column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
+
+            # Blit column
+            surface.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + self.tilt_offset))
+        
+        # Return surface
+        return surface
+
+    def do_spritecast_to_surface(self, sprite_data, raycast_data, sprite_textures):
+
+        # Create surface
+        surface = pygame.Surface((self.view_width, self.view_height))
+
+        # Iterate over each sprite in sprite_data
+        for s in range(sprite_data.shape[0]):
+
+            # Extract data
+            texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y = sprite_data[s, :]
+
+            texture_id = int(texture_id)
+            sprite_size = ((sprite_size_x), (sprite_size_y))
+            draw_start = (int(draw_start_x), int(draw_start_y))
+            draw_end = (int(draw_start_x + sprite_size_x), int(draw_start_y + sprite_size_y))
+
+            # Compute intensity
+            final_factor = min(1.0, (self.INTENSITY_MULTIPLIER * self.INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
+
+            # Compute surface to draw from
+            sprite = pygame.transform.scale(sprite_textures[texture_id], sprite_size)
+            
+            # Create column surface
+            column = pygame.Surface((1, sprite_size[1]))
+            column.set_colorkey((0,0,0))
+
+            # Iterate and blit each column of the sprite
+            for col in range(draw_start[0], draw_end[0]):
+                if col > 0 and col < self.view_width and sprite_distance < raycast_data[col][0]:
+                    
+                    # Blit to column
+                    column.blit(sprite, (-(col - draw_start[0]), 0))
+
+                    # Apply effects
+                    column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
+
+                    # Blit to self.screen
+                    surface.blit(column, (col, draw_start[1]))
+        
+        # Return surface
+        return surface
+
+    def do_skycast_to_surface(self, sky_color, ground_color):
+
+        # Make surface
+        surface = pygame.Surface((self.view_width, self.view_height))
+
+        # Draw sky and ground
+        middle = max(0, int(self.view_height/2 + self.tilt_offset))
+        pygame.draw.rect(surface, sky_color, pygame.Rect((0, 0), (self.view_width, middle)))
+        pygame.draw.rect(surface, ground_color, pygame.Rect((0, middle), (self.view_width, self.view_height - middle)))
+
+        # Return surface
+        return surface
+
     def do_raycast(self, level: Level) -> list:
 
         # For each column / working x cast a ray using dda

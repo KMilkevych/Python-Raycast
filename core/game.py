@@ -183,18 +183,29 @@ class Game:
             self.screen.fill(pygame.Color(0, 0, 0))
 
             # Draw sky and ground
-            self.__draw_sky_and_ground()
+            sky_and_ground_surface = self.__camera.do_skycast_to_surface(self.__level.sky_color, self.__level.ground_color)
+            self.screen.blit(sky_and_ground_surface, (0, 0))
 
             # Draw floors and ceilings
-            self.__draw_floors_and_ceilings()
+            floors_and_ceilings_surface = self.__camera.do_floorcast_to_surface(self.__level, self.textures)
+            floors_and_ceilings_surface.set_colorkey((0, 0, 0))
+            self.screen.blit(floors_and_ceilings_surface, (0, 0))
+
+            # Compute raycast data
+            raycast_data = self.__compute_raycast_data()
 
             # Draw walls
-            raycast_data = self.__compute_raycast_data()
-            self.__draw_walls(raycast_data)
+            walls_surface = self.__camera.do_wallcast_to_surface(self.__level, raycast_data, self.textures)
+            walls_surface.set_colorkey((0, 0, 0))
+            self.screen.blit(walls_surface, (0, 0))
+
+            # Compute sprite data
+            sprite_data = self.__compute_sprite_data()
 
             # Draw sprites
-            sprite_data = self.__compute_sprite_data()
-            self.__draw_sprites(sprite_data, raycast_data)
+            sprite_surface = self.__camera.do_spritecast_to_surface(sprite_data, raycast_data, self.sprite_textures)
+            sprite_surface.set_colorkey((0, 0, 0))
+            self.screen.blit(sprite_surface, (0, 0))
 
             # Draw debug info
             # TODO: Make debug info
@@ -215,93 +226,9 @@ class Game:
         # Quit application
         pygame.quit()
 
-
-    def __draw_sky_and_ground(self):
-        middle = max(0, int(self.__frame_size[1]/2 + self.__camera.tilt_offset))
-        pygame.draw.rect(self.screen, self.__level.sky_color, pygame.Rect((0, 0), (self.__frame_size[0], middle)))
-        pygame.draw.rect(self.screen, self.__level.ground_color, pygame.Rect((0, middle), (self.__frame_size[0], self.__frame_size[1] - middle)))
-
-
-    def __draw_floors_and_ceilings(self):
-
-        # Compute floorcast surface
-        floors_and_ceilings_surface = self.__camera.do_floorcast_to_surface(self.__level, self.textures)
-        floors_and_ceilings_surface.set_colorkey((0, 0, 0))
-
-        # Draw floorcast surface to screen
-        self.screen.blit(floors_and_ceilings_surface, (0, 0))
-    
+  
     def __compute_raycast_data(self):
         return self.__camera.do_raycast(self.__level)
 
-    def __draw_walls(self, raycast_data):
-
-        # Create pygame surface for a line
-        column = pygame.Surface((1, TEXTURE_SIZE[1]))
-
-        # Draw columns to screen
-        for col in range(self.__frame_size[0]):
-
-            # Extract data from dda
-            distance, (mapX, mapY), face, offset = raycast_data[col]
-
-            # Extract wall data from walls
-            wall_tag, texture_id, wall_height = self.__level.walls[mapY][mapX]
-
-            # Compute height of wall, and space/offset at top based on self.camera height
-            height, height_offset = self.__camera.height_and_offset_from_distance(wall_height, distance)
-
-            # Compute modifiers
-            shade_factor = 1.0 - 0.2 * (face % 2)
-
-            intensify_factor = min(1.0, (self.__camera.INTENSITY_MULTIPLIER * self.__camera.INTENSITY_MULTIPLIER) / (distance * distance))
-            final_factor = min(shade_factor * intensify_factor * 255, 255)
-
-            # Apply texture to column
-            column.blit(self.textures[texture_id], ((-1) * (offset), 0))
-
-            # Apply effects
-            column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
-
-            # Blit column
-            self.screen.blit(pygame.transform.scale(column, (1, height)), (col, height_offset + self.__camera.tilt_offset))
-
     def __compute_sprite_data(self):
         return self.__camera.compute_sprite_data(self.__level)
-
-    def __draw_sprites(self, sprite_data, raycast_data):
-
-        # Iterate over each sprite in sprite_data
-        for s in range(sprite_data.shape[0]):
-
-            # Extract data
-            texture_id, sprite_distance, sprite_size_x, sprite_size_y, draw_start_x, draw_start_y = sprite_data[s, :]
-
-            texture_id = int(texture_id)
-            sprite_size = ((sprite_size_x), (sprite_size_y))
-            draw_start = (int(draw_start_x), int(draw_start_y))
-            draw_end = (int(draw_start_x + sprite_size_x), int(draw_start_y + sprite_size_y))
-
-            # Compute intensity
-            final_factor = min(1.0, (self.__camera.INTENSITY_MULTIPLIER * self.__camera.INTENSITY_MULTIPLIER) / (sprite_distance * sprite_distance)) * 255
-
-            # Compute surface to draw from
-            sprite = pygame.transform.scale(self.sprite_textures[texture_id], sprite_size)
-            
-            # Create column surface
-            column = pygame.Surface((1, sprite_size[1]))
-            column.set_colorkey((0,0,0))
-
-
-            # Iterate and blit each column of the sprite
-            for col in range(draw_start[0], draw_end[0]):
-                if col > 0 and col < self.__frame_size[0] and sprite_distance < raycast_data[col][0]:
-                    
-                    # Blit to column
-                    column.blit(sprite, (-(col - draw_start[0]), 0))
-
-                    # Apply effects
-                    column.fill((final_factor, final_factor, final_factor), special_flags=BLEND_MULT)
-
-                    # Blit to self.screen
-                    self.screen.blit(column, (col, draw_start[1]))
