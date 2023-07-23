@@ -8,7 +8,8 @@ from core.texture_helper import load_textures, load_sprite_textures, TEXTURE_SIZ
 
 from core.level import Level
 from core.camera import Camera
-from typing import Tuple, Callable
+from core.drawable import Drawable
+from typing import Tuple, Callable, List
 
 class Game:
 
@@ -54,6 +55,9 @@ class Game:
 
         # Custom objects / variables dictionary
         self.custom_variables = {}
+
+        # Drawables
+        self.drawables = []
 
         # Instantiate font for text writing
         pygame.font.init()
@@ -124,6 +128,26 @@ class Game:
     def set_custom_variables(self, custom_variables: dict):
         self.custom_variables = custom_variables
 
+    def get_drawables(self) -> list[Drawable]:
+        return self.drawables
+
+    def set_drawables(self, drawables: list[Drawable]):
+        self.drawables = drawables
+    
+    def add_drawable(self, drawable: Drawable):
+        self.drawables.append(drawable)
+    
+    def remove_drawable(self, drawable: Drawable):
+        self.drawables.remove(drawable)
+
+    def __get_drawables_ndarray(self) -> np.ndarray:
+        
+        # Map to list of ndarrays
+        ndarray_list = list(map(lambda d: d.get_ndarray(), self.drawables))
+
+        # Return numpy ndarray
+        return np.array(ndarray_list).reshape(len(self.drawables), 5)
+
     def set_update(self, update: Callable[['Game', float], None]):
         self.__update = update
 
@@ -192,7 +216,7 @@ class Game:
             self.screen.blit(floors_and_ceilings_surface, (0, 0))
 
             # Compute raycast data
-            raycast_data = self.__compute_raycast_data()
+            raycast_data = self.__camera.do_raycast(self.__level)
 
             # Draw walls
             walls_surface = self.__camera.do_wallcast_to_surface(self.__level, raycast_data, self.textures)
@@ -200,7 +224,8 @@ class Game:
             self.screen.blit(walls_surface, (0, 0))
 
             # Compute sprite data
-            sprite_data = self.__compute_sprite_data()
+            drawable_sprites = np.vstack([self.__level.get_static_drawables(), self.__get_drawables_ndarray()])
+            sprite_data = self.__camera.compute_sprite_data(self.__level, drawable_sprites)
 
             # Draw sprites
             sprite_surface = self.__camera.do_spritecast_to_surface(sprite_data, raycast_data, self.sprite_textures)
@@ -225,10 +250,3 @@ class Game:
 
         # Quit application
         pygame.quit()
-
-  
-    def __compute_raycast_data(self):
-        return self.__camera.do_raycast(self.__level)
-
-    def __compute_sprite_data(self):
-        return self.__camera.compute_sprite_data(self.__level)

@@ -1,11 +1,14 @@
 from core.game import Game
 #from core.level import Level
 from core.camera import Camera
+from core.drawable import Drawable
 
 from levels import Level0
 
 import pygame
 import numpy as np
+
+import random
 
 # Define constants
 WINDOW_SIZE = (1280, 800)
@@ -73,6 +76,8 @@ def bind_keys(game: Game, camera: Camera):
     def game_toggle_debug_info():
         game.set_debug_enabled(not(game.get_debug_enabled()))
 
+        move_magic_lamp()
+
     def game_quit():
         game.quit()
 
@@ -100,6 +105,21 @@ def update(game: Game, dt: float):
     pass
 
 game.set_update(update)
+
+# Add a custom drawable (a magic lamp that moves to a random place when pressing x)
+magic_lamp = Drawable(0, 2, 2.5, 11.5, 32)
+game.add_drawable(magic_lamp)
+game.set_custom_variable("magic_lamp", magic_lamp)
+
+# Define a function to move magic lamp
+def move_magic_lamp():
+    # Move magic lamp to a random spot on the level that is not a wall
+    while True:
+        magic_lamp.x_pos = random.randint(0, game.get_level().get_walls().shape[1] - 1) + 0.5
+        magic_lamp.y_pos = random.randint(0, game.get_level().get_walls().shape[0] - 1) + 0.5
+
+        if game.get_level().get_walls()[int(magic_lamp.y_pos - 0.5), int(magic_lamp.x_pos - 0.5), 0] == 0:
+            break
 
 # Run game loop
 game.run()

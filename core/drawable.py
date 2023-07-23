@@ -1,6 +1,6 @@
 import numpy as np
 
-class StaticObject:
+class Drawable:
 
     def __init__(self, tag: int, texture_id: int, x_pos: float, y_pos: float, z_pos: float):
         

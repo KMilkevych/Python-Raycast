@@ -131,6 +131,8 @@ class Level0(Level):
             [*LAMP, 1.5, 9.5],
             [*LAMP, 3.5, 9.5],
         ])
+        #print(static_objects.shape)
+        #print(static_objects)
 
         # Call level init
         Level.__init__(self,
@@ -145,4 +147,4 @@ class Level0(Level):
         self.set_walls(walls)
         self.set_floors(floors)
         self.set_ceilings(ceilings)
-        self.set_static_objects(static_objects)
+        self.set_static_drawables(static_objects)

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-from core.staticobject import StaticObject
+from core.drawable import Drawable
 
 class Level:
 
@@ -31,15 +31,15 @@ class Level:
         self.__walls = np.array([])
 
         # Floors and ceilings registered
-        self.floors = []
+        #self.floors = []
         self.__floors = np.array([])
 
-        self.ceilings = []
+        #self.ceilings = []
         self.__ceilings = np.array([])
 
         # Static objects registered
-        self.static_objects = []    # regular list
-        self.__static_objects = np.array([])  # numpy array
+        self.__static_drawables_list = []    # regular list
+        self.__static_drawables = np.array([])  # numpy array
     
     def get_tile_size(self) -> np.ndarray:
         return self.tile_size
@@ -95,27 +95,27 @@ class Level:
     def set_ceilings(self, ceilings: np.ndarray):
         self.ceilings = ceilings
     
-    def get_static_objects(self) -> np.ndarray:
-        return self.__static_objects
+    def get_static_drawables(self) -> np.ndarray:
+        return self.__static_drawables
     
-    def set_static_objects(self, static_objects: np.ndarray):
-        self.__static_objects = static_objects
+    def set_static_drawables(self, static_drawables: np.ndarray):
+        self.__static_drawables = static_drawables
         
-    def add_static_object(self, staticobject: StaticObject):
-        self.static_objects.append(staticobject)
-        self.__recompute_static_objects()
+    def add_static_drawable(self, static_drawable: Drawable):
+        self.__static_drawables_list.append(static_drawable)
+        self.__recompute_static_drawables()
     
-    def remove_static_object(self, staticobject: StaticObject):
-        self.static_objects.remove(staticobject)
-        self.__recompute_static_objects()
+    def remove_static_drawable(self, static_drawable: Drawable):
+        self.__static_drawables_list.remove(static_drawable)
+        self.__recompute_static_drawables()
 
-    def __recompute_static_objects(self):
+    def __recompute_static_drawables(self):
         
         # Mapped staticobjects
-        mapped_static_objects = list(map(lambda s: s.get_ndarray(), self.static_objects))
+        mapped_static_drawables = list(map(lambda s: s.get_ndarray(), self.__static_drawables_list))
 
         # Set numpy array
-        self.static_objects = np.array(mapped_static_objects)
+        self.__static_drawables_list = np.array(mapped_static_drawables)
 
 
 
