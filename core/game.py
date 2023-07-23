@@ -36,6 +36,9 @@ class Game:
         self.__level = level
         self.__camera = camera
 
+        # Set update function
+        self.__update = None
+
         # Initialize without mouse and debug enabled
         self.__mouse_enabled = False
         self.__debug_enabled = False
@@ -121,6 +124,9 @@ class Game:
     def set_custom_variables(self, custom_variables: dict):
         self.custom_variables = custom_variables
 
+    def set_update(self, update: Callable[['Game', float], None]):
+        self.__update = update
+
     def run(self):
 
         # Make clock
@@ -169,6 +175,9 @@ class Game:
             if self.__mouse_enabled:
                 for mouse_action in self.__on_mouse_move:
                     mouse_action(mouse_xy[0], mouse_xy[1])
+
+            # Now call the update function
+            self.__update(self, self.__dt)
 
             # Clear the screen
             self.screen.fill(pygame.Color(0, 0, 0))

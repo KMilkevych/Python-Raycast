@@ -5,6 +5,7 @@ from core.camera import Camera
 from levels import Level0
 
 import pygame
+import numpy as np
 
 # Define constants
 WINDOW_SIZE = (1280, 800)
@@ -93,6 +94,12 @@ game.set_camera(camera)
 
 # Bind keys
 bind_keys(game, camera)
+
+# Define update function for game
+def update(game: Game, dt: float):
+    pass
+
+game.set_update(update)
 
 # Run game loop
 game.run()
