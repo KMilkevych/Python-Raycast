@@ -25,6 +25,7 @@ class Level:
         self.ground_color = ground_color
         self.sky_color = sky_color
 
+        # TODO: Make this useful
         # Walls registered
         self.walls = []
         self.__walls = np.array([])
