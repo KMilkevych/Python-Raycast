@@ -128,10 +128,10 @@ class Game:
     def set_custom_variables(self, custom_variables: dict):
         self.custom_variables = custom_variables
 
-    def get_drawables(self) -> list[Drawable]:
+    def get_drawables(self) -> List[Drawable]:
         return self.drawables
 
-    def set_drawables(self, drawables: list[Drawable]):
+    def set_drawables(self, drawables: List[Drawable]):
         self.drawables = drawables
     
     def add_drawable(self, drawable: Drawable):
